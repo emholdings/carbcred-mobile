@@ -1,6 +1,11 @@
 import { api } from '@api/client';
 
-export type ApprovalType = 'contractor_application' | 'workflow_task' | 'field_submission' | 'requisition';
+export type ApprovalType =
+  | 'contractor_application'
+  | 'workflow_task'
+  | 'field_submission'
+  | 'plant_reading'
+  | 'requisition';
 
 export type ApprovalItem = {
   type: ApprovalType;
@@ -51,5 +56,6 @@ export const TYPE_LABELS: Record<ApprovalType, string> = {
   contractor_application: 'Applications',
   workflow_task: 'Workflow tasks',
   field_submission: 'Field submissions',
+  plant_reading: 'Wash readings',
   requisition: 'Requisitions',
 };

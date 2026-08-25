@@ -43,6 +43,9 @@ export type SiteOperations = {
     efficiency: number | null;
     /** unverified · verified · queried — the standing of the number. */
     status: string;
+    verified_by: string | null;
+    reviewed_at: string | null;
+    review_notes: string | null;
     has_photo: boolean;
     located: boolean;
   }[];

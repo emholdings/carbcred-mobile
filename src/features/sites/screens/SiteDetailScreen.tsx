@@ -209,7 +209,13 @@ export function SiteDetailScreen({ route, navigation }: Props) {
               addLabel="Record a wash reading"
             >
               {ops.performance.length ? (
-                [...ops.performance].reverse().map((reading, index) => (
+                <ScrollView
+                  style={{ maxHeight: 300 }}
+                  nestedScrollEnabled
+                  showsVerticalScrollIndicator
+                  contentContainerStyle={{ gap: 0 }}
+                >
+                  {[...ops.performance].reverse().map((reading, index) => (
                   <View
                     key={reading.id}
                     style={{
@@ -246,9 +252,10 @@ export function SiteDetailScreen({ route, navigation }: Props) {
                       {reading.located ? <MapPin color={scheme.textMuted} size={13} /> : null}
                       <View style={{ flex: 1 }} />
                       <Standing status={reading.status} />
+                      </View>
                     </View>
-                  </View>
-                ))
+                  ))}
+                </ScrollView>
               ) : (
                 <Empty>No readings filed yet.</Empty>
               )}
@@ -299,23 +306,42 @@ export function SiteDetailScreen({ route, navigation }: Props) {
               addLabel="Record who is on the ground"
             >
               {sorted.attendanceDays.length ? (
-                sorted.attendanceDays.map(([day, people]) => (
-                  <View key={day} style={{ gap: 4 }}>
-                    <Text
+                <ScrollView style={{ maxHeight: 320 }} nestedScrollEnabled showsVerticalScrollIndicator>
+                  {sorted.attendanceDays.map(([day, people], index) => (
+                    <View
+                      key={day}
                       style={{
-                        color: day === sorted.today ? brand.deepLeaf : scheme.textMuted,
-                        fontSize: 12,
-                        fontWeight: '700',
+                        gap: 6,
+                        paddingTop: index === 0 ? 0 : 12,
+                        marginTop: index === 0 ? 0 : 12,
+                        borderTopWidth: index === 0 ? 0 : 1,
+                        borderTopColor: scheme.border,
                       }}
                     >
-                      {day === sorted.today ? 'TODAY' : day}
-                      <Text style={{ fontWeight: '400' }}>{`  ${people.length} on the ground`}</Text>
-                    </Text>
-                    {people.map((person) => (
-                      <Line key={person.id} title={person.name} detail={person.role} />
-                    ))}
-                  </View>
-                ))
+                      {/* The day is the heading, because a register is read a
+                          day at a time: who was here on the day in question. */}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <Text
+                          style={{
+                            color: day === sorted.today ? brand.deepLeaf : scheme.text,
+                            fontSize: 14,
+                            fontWeight: '700',
+                          }}
+                        >
+                          {day === sorted.today ? 'Today' : spokenDay(day)}
+                        </Text>
+                        <View style={{ flex: 1 }} />
+                        <Text style={{ color: scheme.textMuted, fontSize: 12, fontWeight: '600' }}>
+                          {`${people.length} on the ground`}
+                        </Text>
+                      </View>
+
+                      {people.map((person) => (
+                        <Line key={person.id} title={person.name} detail={person.role} />
+                      ))}
+                    </View>
+                  ))}
+                </ScrollView>
               ) : (
                 <Empty>Nobody recorded in the last fortnight.</Empty>
               )}
@@ -524,6 +550,16 @@ function useSortedOperations(ops: SiteOperations | undefined) {
  * Where a reading stands: unverified until somebody who is neither its author
  * nor the contractor being measured has looked at the evidence.
  */
+function spokenDay(day: string): string {
+  const [year, month, date] = day.split('-').map(Number);
+
+  return new Date(year, month - 1, date).toLocaleDateString(undefined, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  });
+}
+
 function Standing({ status }: { status: string }) {
   const { scheme } = useTheme();
 
