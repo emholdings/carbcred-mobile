@@ -1,5 +1,5 @@
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
-import { BadgeCheck, Building2, ChevronRight, FolderKanban, HardHat, LogOut, Phone, ShieldCheck, Smartphone, Ticket } from 'lucide-react-native';
+import { BadgeCheck, Building2, CalendarClock, ChevronRight, FolderKanban, HardHat, LogOut, Phone, ShieldCheck, Smartphone, Ticket } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { logout } from '@features/auth/api';
 import { BrandScreen } from '@shared/components/BrandScreen';
@@ -99,6 +99,12 @@ export function MoreScreen({ navigation }: Props) {
             />
           </>
         ) : null}
+        <Row
+          icon={<CalendarClock color={brand.deepLeaf} size={20} />}
+          label="Compliance"
+          hint="Permits lapsing, EMA follow-ups falling due"
+          onPress={() => navigation.navigate('Compliance')}
+        />
         <Row
           icon={<Ticket color={brand.deepLeaf} size={20} />}
           label="Tickets"

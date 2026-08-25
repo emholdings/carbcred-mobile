@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { onlineManager, useQueryClient } from '@tanstack/react-query';
 import { fetchDashboard } from '@features/home/api';
+import { fetchCompliance } from '@features/more/compliance';
 import { fetchEmergencyContacts } from '@features/more/api';
 import { fetchRivers } from '@features/rivers/api';
 import { fetchSite, fetchSites } from '@features/sites/api';
@@ -52,6 +53,7 @@ export function useWarmCache(): void {
         prefetch(['approvals', null], () => fetchInbox()),
         prefetch(['ticket-vocabulary'], fetchVocabulary),
         prefetch(['emergency-contacts', slug], () => fetchEmergencyContacts(slug)),
+        prefetch(['compliance', slug], () => fetchCompliance(slug)),
         prefetch(['sites', slug, 'all'], () => fetchSites(slug)),
       ]);
 
