@@ -1,7 +1,8 @@
-import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Phone } from 'lucide-react-native';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { QueryState } from '@shared/components/QueryState';
 import { useAuthStore } from '@stores/authStore';
 import { useTheme } from '@theme/useTheme';
 import { fetchEmergencyContacts, type EmergencyContact } from '../api';
@@ -15,55 +16,60 @@ export function EmergencyScreen() {
   const { scheme } = useTheme();
   const organisationSlug = useAuthStore((state) => state.organisationSlug);
 
-  const { data, isLoading } = useQuery({
+  const query = useQuery({
     queryKey: ['emergency-contacts', organisationSlug],
     queryFn: () => fetchEmergencyContacts(organisationSlug!),
     enabled: Boolean(organisationSlug),
     // Cached hard: this list is needed exactly when the network is worst.
     staleTime: 24 * 60 * 60 * 1000,
   });
+  const { data } = query;
 
   return (
     <BrandScreen title="Emergency" subtitle="Tap a number to call">
       <ScrollView contentContainerStyle={{ gap: 12, paddingVertical: 20 }}>
-        {isLoading ? <ActivityIndicator color={scheme.textMuted} style={{ marginTop: 30 }} /> : null}
-
-        {data?.map((contact: EmergencyContact) => (
-          <Pressable
-            key={contact.id}
-            onPress={() => contact.phone && Linking.openURL(`tel:${contact.phone.replace(/\s/g, '')}`)}
-            disabled={!contact.phone}
-            accessibilityRole="button"
-            accessibilityLabel={`Call ${contact.name}`}
-            style={{
-              backgroundColor: scheme.surface,
-              borderColor: scheme.border,
-              borderWidth: 1,
-              borderRadius: 14,
-              padding: 16,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 14,
-            }}
-          >
-            <View style={{ flex: 1, gap: 3 }}>
-              <Text style={{ color: scheme.text, fontSize: 16, fontWeight: '600' }}>{contact.name}</Text>
-              <Text style={{ color: scheme.textMuted, fontSize: 13 }}>
-                {[contact.type, contact.is_24_7 ? '24/7' : null, contact.province].filter(Boolean).join(' · ')}
-              </Text>
-              {contact.phone ? (
-                <Text style={{ color: scheme.accent, fontSize: 16, fontWeight: '600' }}>{contact.phone}</Text>
-              ) : null}
-            </View>
-            {contact.phone ? <Phone color={scheme.accent} size={22} /> : null}
-          </Pressable>
-        ))}
-
-        {data?.length === 0 ? (
-          <Text style={{ color: scheme.textMuted, fontSize: 14 }}>
-            No emergency contacts have been recorded for this organisation yet.
-          </Text>
-        ) : null}
+        <QueryState
+          query={query}
+          isEmpty={(value) => value.length === 0}
+          emptyTitle="No numbers saved"
+          emptyBody="The emergency directory for your operating area appears here."
+          skeletonRows={5}
+        >
+          {(list) => (
+            <>
+              {list.map((contact: EmergencyContact) => (
+                <Pressable
+                  key={contact.id}
+                  onPress={() => contact.phone && Linking.openURL(`tel:${contact.phone.replace(/\s/g, '')}`)}
+                  disabled={!contact.phone}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Call ${contact.name}`}
+                  style={{
+                    backgroundColor: scheme.surface,
+                    borderColor: scheme.border,
+                    borderWidth: 1,
+                    borderRadius: 14,
+                    padding: 16,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 14,
+                  }}
+                >
+                  <View style={{ flex: 1, gap: 3 }}>
+                    <Text style={{ color: scheme.text, fontSize: 16, fontWeight: '600' }}>{contact.name}</Text>
+                    <Text style={{ color: scheme.textMuted, fontSize: 13 }}>
+                      {[contact.type, contact.is_24_7 ? '24/7' : null, contact.province].filter(Boolean).join(' · ')}
+                    </Text>
+                    {contact.phone ? (
+                      <Text style={{ color: scheme.accent, fontSize: 16, fontWeight: '600' }}>{contact.phone}</Text>
+                    ) : null}
+                  </View>
+                  {contact.phone ? <Phone color={scheme.accent} size={22} /> : null}
+                </Pressable>
+              ))}
+            </>
+          )}
+        </QueryState>
       </ScrollView>
     </BrandScreen>
   );

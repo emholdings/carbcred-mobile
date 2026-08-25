@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { api } from '@api/client';
 import { Button } from '@shared/components/Button';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { LoadState } from '@shared/components/QueryState';
 import { TextField } from '@shared/components/TextField';
 import { clientRef } from '@features/capture/clientRef';
 import { useQueueStore } from '@features/capture/queue';
@@ -40,7 +41,7 @@ export function DiscussionScreen({ route }: Props) {
 
   const [body, setBody] = useState('');
 
-  const { data, isLoading, refetch, isRefetching } = useQuery({
+  const query = useQuery({
     queryKey: ['messages', slug, projectSlug],
     queryFn: async () =>
       (
@@ -50,6 +51,7 @@ export function DiscussionScreen({ route }: Props) {
       ).data.data,
     enabled: Boolean(slug),
   });
+  const { data, refetch, isRefetching } = query;
 
   // Anything still on the phone for this thread, shown at the bottom where it
   // will land once it files.
@@ -80,7 +82,7 @@ export function DiscussionScreen({ route }: Props) {
           contentContainerStyle={{ gap: 10, paddingVertical: 16 }}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={scheme.textMuted} />}
         >
-          {isLoading ? <ActivityIndicator color={scheme.textMuted} style={{ marginTop: 30 }} /> : null}
+          <LoadState query={query} rows={4} />
 
           {data?.map((message) => {
             const mine = message.author_id === me?.id;
@@ -139,7 +141,7 @@ export function DiscussionScreen({ route }: Props) {
             </View>
           ))}
 
-          {data?.length === 0 && pending.length === 0 && !isLoading ? (
+          {data?.length === 0 && pending.length === 0 ? (
             <Text style={{ color: scheme.textMuted, fontSize: 14 }}>
               Nothing said yet. Anything posted here reaches everyone on the project.
             </Text>

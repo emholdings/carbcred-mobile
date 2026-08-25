@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronRight, Plus } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { QueryState } from '@shared/components/QueryState';
 import type { MoreStackParamList } from '@navigation/types';
 import { useAuthStore } from '@stores/authStore';
 import { brand } from '@theme/colors';
@@ -24,11 +25,12 @@ export function TicketsScreen({ navigation }: Props) {
 
   const vocabulary = useQuery({ queryKey: ['ticket-vocabulary'], queryFn: fetchVocabulary, staleTime: 60 * 60 * 1000 });
 
-  const { data, isLoading, refetch, isRefetching } = useQuery({
+  const query = useQuery({
     queryKey: ['tickets', slug, filters],
     queryFn: () => fetchTickets(slug!, filters),
     enabled: Boolean(slug),
   });
+  const { data, refetch, isRefetching } = query;
 
   const toggle = (change: TicketFilters) =>
     setFilters((current) => {
@@ -71,42 +73,47 @@ export function TicketsScreen({ navigation }: Props) {
             />
           ))}
         </ScrollView>
-
-        {isLoading ? <ActivityIndicator color={scheme.textMuted} style={{ marginTop: 30 }} /> : null}
-
-        {data?.map((ticket: Ticket) => (
-          <Pressable
-            key={ticket.id}
-            onPress={() => navigation.navigate('TicketDetail', { ticketId: ticket.id, reference: ticket.reference })}
-            style={{
-              backgroundColor: scheme.surface,
-              borderColor: ticket.is_overdue ? scheme.danger : scheme.border,
-              borderWidth: 1,
-              borderLeftWidth: 5,
-              borderLeftColor: PRIORITY_COLOURS[ticket.priority],
-              borderRadius: 14,
-              padding: 15,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 10,
-            }}
-          >
-            <View style={{ flex: 1, gap: 3 }}>
-              <Text style={{ color: scheme.text, fontSize: 15, fontWeight: '600' }}>{ticket.title}</Text>
-              <Text style={{ color: scheme.textMuted, fontSize: 12 }}>
-                {[ticket.reference, ticket.category?.name, label(ticket.status)].filter(Boolean).join(' · ')}
-              </Text>
-              <Text style={{ color: ticket.is_overdue ? scheme.danger : scheme.textMuted, fontSize: 12 }}>
-                {ticket.is_overdue ? 'Overdue' : ticket.assignee ? `With ${ticket.assignee}` : 'Nobody assigned'}
-              </Text>
-            </View>
-            <ChevronRight color={scheme.textMuted} size={20} />
-          </Pressable>
-        ))}
-
-        {data?.length === 0 && !isLoading ? (
-          <Text style={{ color: scheme.textMuted, fontSize: 14 }}>Nothing in this queue.</Text>
-        ) : null}
+        <QueryState
+          query={query}
+          isEmpty={(value) => value.length === 0}
+          emptyTitle="No tickets here"
+          emptyBody="Tickets you raise or are assigned show up in this list."
+          skeletonRows={4}
+        >
+          {(list) => (
+            <>
+              {list.map((ticket: Ticket) => (
+                <Pressable
+                  key={ticket.id}
+                  onPress={() => navigation.navigate('TicketDetail', { ticketId: ticket.id, reference: ticket.reference })}
+                  style={{
+                    backgroundColor: scheme.surface,
+                    borderColor: ticket.is_overdue ? scheme.danger : scheme.border,
+                    borderWidth: 1,
+                    borderLeftWidth: 5,
+                    borderLeftColor: PRIORITY_COLOURS[ticket.priority],
+                    borderRadius: 14,
+                    padding: 15,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 10,
+                  }}
+                >
+                  <View style={{ flex: 1, gap: 3 }}>
+                    <Text style={{ color: scheme.text, fontSize: 15, fontWeight: '600' }}>{ticket.title}</Text>
+                    <Text style={{ color: scheme.textMuted, fontSize: 12 }}>
+                      {[ticket.reference, ticket.category?.name, label(ticket.status)].filter(Boolean).join(' · ')}
+                    </Text>
+                    <Text style={{ color: ticket.is_overdue ? scheme.danger : scheme.textMuted, fontSize: 12 }}>
+                      {ticket.is_overdue ? 'Overdue' : ticket.assignee ? `With ${ticket.assignee}` : 'Nobody assigned'}
+                    </Text>
+                  </View>
+                  <ChevronRight color={scheme.textMuted} size={20} />
+                </Pressable>
+              ))}
+            </>
+          )}
+        </QueryState>
       </ScrollView>
     </BrandScreen>
   );

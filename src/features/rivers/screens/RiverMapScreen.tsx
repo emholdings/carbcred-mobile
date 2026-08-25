@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { useQuery } from '@tanstack/react-query';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { LoadState } from '@shared/components/QueryState';
 import { fetchSites, type SiteRow } from '@features/sites/api';
 import type { RiversStackParamList } from '@navigation/types';
 import { useAuthStore } from '@stores/authStore';
@@ -67,8 +68,8 @@ export function RiverMapScreen({ navigation }: Props) {
   return (
     <BrandScreen title="The programme" subtitle={`${rivers.data?.length ?? 0} rivers · ${located.length} sites`}>
       <View style={{ flex: 1, paddingVertical: 14, gap: 12 }}>
-        {rivers.isLoading ? (
-          <ActivityIndicator color={scheme.textMuted} style={{ marginTop: 30 }} />
+        {rivers.data === undefined ? (
+          <LoadState query={rivers} rows={3} />
         ) : (
           <View style={{ flex: 1, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: scheme.border }}>
             <MapView provider={PROVIDER_DEFAULT} style={{ flex: 1 }} initialRegion={region}>

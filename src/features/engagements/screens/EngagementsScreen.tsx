@@ -1,7 +1,8 @@
-import { ActivityIndicator, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { BarChart } from '@shared/components/BarChart';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { QueryState } from '@shared/components/QueryState';
 import { useAuthStore } from '@stores/authStore';
 import { brand } from '@theme/colors';
 import { useTheme } from '@theme/useTheme';
@@ -18,11 +19,12 @@ export function EngagementsScreen() {
   const slug = useAuthStore((state) => state.organisationSlug);
   const organisation = useAuthStore((state) => state.currentOrganisation)();
 
-  const { data, isLoading, refetch, isRefetching } = useQuery({
+  const query = useQuery({
     queryKey: ['engagements', slug],
     queryFn: () => fetchEngagements(slug!),
     enabled: Boolean(slug),
   });
+  const { data, refetch, isRefetching } = query;
 
   return (
     <BrandScreen
@@ -39,86 +41,90 @@ export function EngagementsScreen() {
         contentContainerStyle={{ gap: 14, paddingVertical: 18 }}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={scheme.textMuted} />}
       >
-        {isLoading ? <ActivityIndicator color={scheme.textMuted} style={{ marginTop: 30 }} /> : null}
+        <QueryState
+          query={query}
+          isEmpty={(value) => value.length === 0}
+          emptyTitle="No engagements yet"
+          emptyBody="Once your organisation is engaged on a project, it appears here."
+          skeletonRows={3}
+        >
+          {(list) => (
+            <>
+              {list.map((engagement: Engagement) => (
+                <View
+                  key={engagement.id}
+                  style={{
+                    backgroundColor: scheme.surface,
+                    borderColor: scheme.border,
+                    borderWidth: 1,
+                    borderRadius: 16,
+                    padding: 16,
+                    gap: 12,
+                  }}
+                >
+                  <View style={{ gap: 3 }}>
+                    <Text style={{ color: scheme.text, fontSize: 17, fontWeight: '700' }}>{engagement.name}</Text>
+                    <Text style={{ color: scheme.textMuted, fontSize: 13 }}>
+                      {[engagement.role, engagement.status, engagement.lead ? `led by ${engagement.lead}` : null]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </Text>
+                  </View>
 
-        {data?.map((engagement: Engagement) => (
-          <View
-            key={engagement.id}
-            style={{
-              backgroundColor: scheme.surface,
-              borderColor: scheme.border,
-              borderWidth: 1,
-              borderRadius: 16,
-              padding: 16,
-              gap: 12,
-            }}
-          >
-            <View style={{ gap: 3 }}>
-              <Text style={{ color: scheme.text, fontSize: 17, fontWeight: '700' }}>{engagement.name}</Text>
-              <Text style={{ color: scheme.textMuted, fontSize: 13 }}>
-                {[engagement.role, engagement.status, engagement.lead ? `led by ${engagement.lead}` : null]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </Text>
-            </View>
+                  {engagement.contract ? (
+                    <View
+                      style={{
+                        backgroundColor: scheme.background,
+                        borderRadius: 12,
+                        padding: 12,
+                        gap: 2,
+                      }}
+                    >
+                      <Text style={{ color: scheme.text, fontSize: 14, fontWeight: '600' }}>
+                        {engagement.contract.reference}
+                      </Text>
+                      <Text style={{ color: scheme.textMuted, fontSize: 13 }}>
+                        {engagement.contract.title}
+                      </Text>
+                      <Text style={{ color: scheme.textMuted, fontSize: 12 }}>
+                        {engagement.contract.status}
+                        {engagement.contract.end_date ? ` · to ${engagement.contract.end_date}` : ''}
+                      </Text>
+                    </View>
+                  ) : null}
 
-            {engagement.contract ? (
-              <View
-                style={{
-                  backgroundColor: scheme.background,
-                  borderRadius: 12,
-                  padding: 12,
-                  gap: 2,
-                }}
-              >
-                <Text style={{ color: scheme.text, fontSize: 14, fontWeight: '600' }}>
-                  {engagement.contract.reference}
-                </Text>
-                <Text style={{ color: scheme.textMuted, fontSize: 13 }}>
-                  {engagement.contract.title}
-                </Text>
-                <Text style={{ color: scheme.textMuted, fontSize: 12 }}>
-                  {engagement.contract.status}
-                  {engagement.contract.end_date ? ` · to ${engagement.contract.end_date}` : ''}
-                </Text>
-              </View>
-            ) : null}
-
-            {engagement.sites.map((site) => (
-              <View key={site.id} style={{ gap: 8 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text style={{ color: scheme.text, fontSize: 15, fontWeight: '600', flex: 1 }}>
-                    {site.name}
-                  </Text>
-                  <Text style={{ color: scheme.textMuted, fontSize: 12 }}>
-                    {site.readings_count} readings
-                  </Text>
+                  {engagement.sites.map((site) => (
+                    <View key={site.id} style={{ gap: 8 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Text style={{ color: scheme.text, fontSize: 15, fontWeight: '600', flex: 1 }}>
+                          {site.name}
+                        </Text>
+                        <Text style={{ color: scheme.textMuted, fontSize: 12 }}>
+                          {site.readings_count} readings
+                        </Text>
+                      </View>
+                      <BarChart
+                        height={70}
+                        bars={[...site.recent]
+                          .reverse()
+                          .map((reading) => ({
+                            label: reading.reading_date.slice(5),
+                            actual: reading.tonnes_processed,
+                            expected: null,
+                          }))}
+                      />
+                      {site.last_reading ? (
+                        <Text style={{ color: scheme.textMuted, fontSize: 12 }}>
+                          Last reading {site.last_reading}
+                        </Text>
+                      ) : null}
+                    </View>
+                  ))}
                 </View>
-                <BarChart
-                  height={70}
-                  bars={[...site.recent]
-                    .reverse()
-                    .map((reading) => ({
-                      label: reading.reading_date.slice(5),
-                      actual: reading.tonnes_processed,
-                      expected: null,
-                    }))}
-                />
-                {site.last_reading ? (
-                  <Text style={{ color: scheme.textMuted, fontSize: 12 }}>
-                    Last reading {site.last_reading}
-                  </Text>
-                ) : null}
-              </View>
-            ))}
-          </View>
-        ))}
-
-        {data?.length === 0 ? (
-          <Text style={{ color: scheme.textMuted, fontSize: 14 }}>
-            No engagements yet. A contract has to be activated before work appears here.
-          </Text>
-        ) : null}
+              ))}
+            </>
+          )}
+        </QueryState>
       </ScrollView>
     </BrandScreen>
   );

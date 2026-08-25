@@ -1,7 +1,8 @@
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Check, ChevronRight, Circle, CircleDot, MessageSquare } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { LoadState } from '@shared/components/QueryState';
 import { Screen } from '@shared/components/Screen';
 import type { MoreStackParamList } from '@navigation/types';
 import { useAuthStore } from '@stores/authStore';
@@ -21,11 +22,12 @@ export function ProjectDetailScreen({ route, navigation }: Props) {
   const organisationSlug = useAuthStore((state) => state.organisationSlug);
   const { slug, name } = route.params;
 
-  const { data, isLoading, refetch, isRefetching } = useQuery({
+  const query = useQuery({
     queryKey: ['project', organisationSlug, slug],
     queryFn: () => fetchProject(organisationSlug!, slug),
     enabled: Boolean(organisationSlug),
   });
+  const { data, refetch, isRefetching } = query;
 
   const progress = phaseProgress(data?.workflow ?? null);
 
@@ -46,7 +48,7 @@ export function ProjectDetailScreen({ route, navigation }: Props) {
           ) : null}
         </View>
 
-        {isLoading ? <ActivityIndicator color={scheme.textMuted} style={{ marginTop: 30 }} /> : null}
+        <LoadState query={query} rows={5} />
 
         <Pressable
           onPress={() => navigation.navigate('Discussion', { projectSlug: slug, name })}

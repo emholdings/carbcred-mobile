@@ -1,7 +1,8 @@
-import { ActivityIndicator, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Check, Circle, FileText } from 'lucide-react-native';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { LoadState } from '@shared/components/QueryState';
 import { useAuthStore } from '@stores/authStore';
 import { brand } from '@theme/colors';
 import { useTheme } from '@theme/useTheme';
@@ -18,11 +19,13 @@ export function OnboardingScreen() {
   const { scheme } = useTheme();
   const slug = useAuthStore((state) => state.organisationSlug);
 
-  const { data, isLoading, refetch, isRefetching } = useQuery({
+  const query = useQuery({
     queryKey: ['onboarding', slug],
     queryFn: () => fetchOnboarding(slug!),
     enabled: Boolean(slug),
   });
+
+  const { data, refetch, isRefetching } = query;
 
   const kyc = data?.kyc;
   const outstanding = data?.requirements.filter((requirement) => !requirement.uploaded) ?? [];
@@ -33,7 +36,7 @@ export function OnboardingScreen() {
         contentContainerStyle={{ gap: 14, paddingVertical: 18 }}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={scheme.textMuted} />}
       >
-        {isLoading ? <ActivityIndicator color={scheme.textMuted} style={{ marginTop: 30 }} /> : null}
+        <LoadState query={query} rows={4} />
 
         {data ? (
           <View

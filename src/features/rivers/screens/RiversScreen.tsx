@@ -1,8 +1,9 @@
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronRight, Map } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { QueryState } from '@shared/components/QueryState';
 import type { RiversStackParamList } from '@navigation/types';
 import { useAuthStore } from '@stores/authStore';
 import { brand } from '@theme/colors';
@@ -23,7 +24,7 @@ export function RiversScreen({ navigation }: Props) {
 
   const slug = useAuthStore((state) => state.organisationSlug);
 
-  const { data, isLoading, refetch, isRefetching } = useQuery({
+  const rivers = useQuery({
     queryKey: ['rivers'],
     queryFn: fetchRivers,
     staleTime: 24 * 60 * 60 * 1000,
@@ -39,13 +40,16 @@ export function RiversScreen({ navigation }: Props) {
   const unallocated = (sites.data?.length ?? 0) - allocated;
 
   return (
-    <BrandScreen title="Rivers" subtitle={data ? `${data.length} approved reaches` : undefined}>
+    <BrandScreen
+      title="Rivers"
+      subtitle={rivers.data ? `${rivers.data.length} approved reaches` : undefined}
+    >
       <ScrollView
         contentContainerStyle={{ gap: 12, paddingVertical: 18 }}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={scheme.textMuted} />}
+        refreshControl={
+          <RefreshControl refreshing={rivers.isRefetching} onRefresh={rivers.refetch} tintColor={scheme.textMuted} />
+        }
       >
-        {isLoading ? <ActivityIndicator color={scheme.textMuted} style={{ marginTop: 30 }} /> : null}
-
         {sites.data ? (
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <Count label="Allocated" value={allocated} colour={brand.deepLeaf} />
@@ -73,33 +77,26 @@ export function RiversScreen({ navigation }: Props) {
           </View>
         </Pressable>
 
-        {data?.map((river: River) => (
-          <Pressable
-            key={river.id}
-            onPress={() => navigation.navigate('RiverSites', { riverId: river.id, name: river.name })}
-            style={{
-              backgroundColor: scheme.surface,
-              borderColor: scheme.border,
-              borderWidth: 1,
-              borderLeftWidth: 5,
-              // A river is always drawn in its own blue, here as everywhere.
-              borderLeftColor: river.color,
-              borderRadius: 14,
-              padding: 16,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 12,
-            }}
-          >
-            <View style={{ flex: 1, gap: 3 }}>
-              <Text style={{ color: scheme.text, fontSize: 16, fontWeight: '600' }}>{river.name} River</Text>
-              <Text style={{ color: scheme.textMuted, fontSize: 13 }}>
-                {river.province} · {river.sites_count} {river.sites_count === 1 ? 'site' : 'sites'} · {river.status}
-              </Text>
-            </View>
-            <ChevronRight color={scheme.textMuted} size={20} />
-          </Pressable>
-        ))}
+        <QueryState
+          query={rivers}
+          isEmpty={(value) => value.length === 0}
+          emptyTitle="No rivers yet"
+          emptyBody="The approved reaches appear here once the programme registers them."
+          skeletonRows={4}
+        >
+          {(list) => (
+            <>
+              {list.map((river: River) => (
+                <RiverCard
+                  key={river.id}
+                  river={river}
+                  onPress={() => navigation.navigate('RiverSites', { riverId: river.id, name: river.name })}
+                />
+              ))}
+            </>
+          )}
+        </QueryState>
+
         {/* A site not yet on an approved river would otherwise be invisible
             from here — the web view groups them as "Not yet on an approved
             river"; this is the same promise, reached from one entry. */}
@@ -126,6 +123,38 @@ export function RiversScreen({ navigation }: Props) {
         </Pressable>
       </ScrollView>
     </BrandScreen>
+  );
+}
+
+/** One reach: its province, how many sites sit on it, and where it stands. */
+function RiverCard({ river, onPress }: { river: River; onPress: () => void }) {
+  const { scheme } = useTheme();
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{
+        backgroundColor: scheme.surface,
+        borderColor: scheme.border,
+        borderWidth: 1,
+        borderLeftWidth: 5,
+        // A river is always drawn in its own blue, here as everywhere.
+        borderLeftColor: river.color,
+        borderRadius: 14,
+        padding: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+      }}
+    >
+      <View style={{ flex: 1, gap: 3 }}>
+        <Text style={{ color: scheme.text, fontSize: 16, fontWeight: '600' }}>{river.name} River</Text>
+        <Text style={{ color: scheme.textMuted, fontSize: 13 }}>
+          {river.province} · {river.sites_count} {river.sites_count === 1 ? 'site' : 'sites'} · {river.status}
+        </Text>
+      </View>
+      <ChevronRight color={scheme.textMuted} size={20} />
+    </Pressable>
   );
 }
 

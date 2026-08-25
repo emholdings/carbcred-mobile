@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { Alert, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { errorMessage } from '@api/client';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { QueryState } from '@shared/components/QueryState';
 import { useTheme } from '@theme/useTheme';
 import { decide, fetchInbox, TYPE_LABELS, type ApprovalItem, type ApprovalType } from '../api';
 
@@ -15,10 +16,12 @@ export function TasksScreen() {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<ApprovalType | null>(null);
 
-  const { data, isLoading, refetch, isRefetching } = useQuery({
+  const inbox = useQuery({
     queryKey: ['approvals', filter],
     queryFn: () => fetchInbox(filter ?? undefined),
   });
+
+  const data = inbox.data;
 
   const mutation = useMutation({
     mutationFn: ({ item, choice }: { item: ApprovalItem; choice: 'approve' | 'reject' }) =>
@@ -36,7 +39,9 @@ export function TasksScreen() {
     <BrandScreen title="Tasks" subtitle={counts.total ? `${counts.total} awaiting you` : "Nothing is waiting on you"}>
       <ScrollView
         contentContainerStyle={{ gap: 16, paddingVertical: 20 }}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={scheme.textMuted} />}
+        refreshControl={
+          <RefreshControl refreshing={inbox.isRefetching} onRefresh={inbox.refetch} tintColor={scheme.textMuted} />
+        }
       >
         {data?.types.length ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
@@ -53,58 +58,78 @@ export function TasksScreen() {
           </ScrollView>
         ) : null}
 
-        {isLoading ? <ActivityIndicator color={scheme.textMuted} style={{ marginTop: 30 }} /> : null}
-
-        {data?.items.map((item) => (
-          <View
-            key={`${item.type}-${item.id}`}
-            style={{
-              backgroundColor: scheme.surface,
-              borderColor: scheme.border,
-              borderWidth: 1,
-              borderRadius: 14,
-              padding: 14,
-              gap: 10,
-            }}
-          >
-            <View style={{ gap: 3 }}>
-              <Text style={{ color: scheme.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 0.4 }}>
-                {item.awaiting.toUpperCase()}
-                {item.organisation ? ` · ${item.organisation.name}` : ''}
-              </Text>
-              <Text style={{ color: scheme.text, fontSize: 16, fontWeight: '600' }}>{item.title}</Text>
-              {item.subtitle ? (
-                <Text style={{ color: scheme.textMuted, fontSize: 13 }}>{item.subtitle}</Text>
-              ) : null}
-            </View>
-
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              {item.actions.includes('approve') ? (
-                <Action
-                  label="Approve"
-                  tone={scheme.accent}
-                  onPress={() => mutation.mutate({ item, choice: 'approve' })}
-                  disabled={mutation.isPending}
+        <QueryState
+          query={inbox}
+          isEmpty={(value) => value.items.length === 0}
+          emptyTitle="Nothing in this queue"
+          emptyBody="When something needs your decision, it appears here."
+          skeletonRows={3}
+        >
+          {(value) => (
+            <>
+              {value.items.map((item) => (
+                <ApprovalCard
+                  key={`${item.type}-${item.id}`}
+                  item={item}
+                  busy={mutation.isPending}
+                  onDecide={(choice) => mutation.mutate({ item, choice })}
                 />
-              ) : null}
-              {item.actions.includes('reject') ? (
-                <Action
-                  label={(item.meta.reject_label as string) ?? 'Reject'}
-                  tone={scheme.danger}
-                  outline
-                  onPress={() => mutation.mutate({ item, choice: 'reject' })}
-                  disabled={mutation.isPending}
-                />
-              ) : null}
-            </View>
-          </View>
-        ))}
-
-        {data && data.items.length === 0 && !isLoading ? (
-          <Text style={{ color: scheme.textMuted, fontSize: 14 }}>Nothing in this queue.</Text>
-        ) : null}
+              ))}
+            </>
+          )}
+        </QueryState>
       </ScrollView>
     </BrandScreen>
+  );
+}
+
+/** One thing awaiting a decision, with the decision on it. */
+function ApprovalCard({
+  item,
+  busy,
+  onDecide,
+}: {
+  item: ApprovalItem;
+  busy: boolean;
+  onDecide: (choice: 'approve' | 'reject') => void;
+}) {
+  const { scheme } = useTheme();
+
+  return (
+    <View
+      style={{
+        backgroundColor: scheme.surface,
+        borderColor: scheme.border,
+        borderWidth: 1,
+        borderRadius: 14,
+        padding: 14,
+        gap: 10,
+      }}
+    >
+      <View style={{ gap: 3 }}>
+        <Text style={{ color: scheme.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 0.4 }}>
+          {item.awaiting.toUpperCase()}
+          {item.organisation ? ` · ${item.organisation.name}` : ''}
+        </Text>
+        <Text style={{ color: scheme.text, fontSize: 16, fontWeight: '600' }}>{item.title}</Text>
+        {item.subtitle ? <Text style={{ color: scheme.textMuted, fontSize: 13 }}>{item.subtitle}</Text> : null}
+      </View>
+
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        {item.actions.includes('approve') ? (
+          <Action label="Approve" tone={scheme.accent} onPress={() => onDecide('approve')} disabled={busy} />
+        ) : null}
+        {item.actions.includes('reject') ? (
+          <Action
+            label={(item.meta.reject_label as string) ?? 'Reject'}
+            tone={scheme.danger}
+            outline
+            onPress={() => onDecide('reject')}
+            disabled={busy}
+          />
+        ) : null}
+      </View>
+    </View>
   );
 }
 

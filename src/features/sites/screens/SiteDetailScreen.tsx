@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
-import { ActivityIndicator, Linking, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { Linking, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Check, Circle } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BarChart } from '@shared/components/BarChart';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { LoadState } from '@shared/components/QueryState';
 import { usePermissions } from '@shared/hooks/usePermissions';
 import type { RiversStackParamList, SiteLogKind } from '@navigation/types';
 import { useAuthStore } from '@stores/authStore';
@@ -40,11 +41,12 @@ export function SiteDetailScreen({ route, navigation }: Props) {
 
   const canLog = can('edit-projects') || can('edit-contractors') || can('edit-field');
 
-  const { data, isLoading, refetch, isRefetching } = useQuery({
+  const query = useQuery({
     queryKey: ['site', slug, siteId],
     queryFn: () => fetchSite(slug!, siteId),
     enabled: Boolean(slug),
   });
+  const { data, refetch, isRefetching } = query;
 
   const ops = data?.operations;
   const sorted = useSortedOperations(ops);
@@ -59,7 +61,7 @@ export function SiteDetailScreen({ route, navigation }: Props) {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={scheme.textMuted} />}
       >
-        {isLoading ? <ActivityIndicator color={scheme.textMuted} style={{ marginTop: 40 }} /> : null}
+        <LoadState query={query} rows={6} />
 
         {data ? (
           <View

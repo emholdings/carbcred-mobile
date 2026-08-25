@@ -1,8 +1,9 @@
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronRight } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { QueryState } from '@shared/components/QueryState';
 import type { RiversStackParamList } from '@navigation/types';
 import { useAuthStore } from '@stores/authStore';
 import { useTheme } from '@theme/useTheme';
@@ -16,7 +17,7 @@ export function SitesScreen({ navigation, route }: Props) {
   const slug = useAuthStore((state) => state.organisationSlug);
   const { riverId, name } = route.params;
 
-  const { data, isLoading, refetch, isRefetching } = useQuery({
+  const sites = useQuery({
     queryKey: ['sites', slug, riverId ?? 'all'],
     queryFn: () => fetchSites(slug!, riverId ? { riverId } : {}),
     enabled: Boolean(slug),
@@ -25,53 +26,81 @@ export function SitesScreen({ navigation, route }: Props) {
   return (
     <BrandScreen
       title={name ? `${name} River` : 'All sites'}
-      subtitle={data ? `${data.length} ${data.length === 1 ? 'site' : 'sites'} in reach` : undefined}
+      subtitle={sites.data ? subtitle(sites.data) : undefined}
     >
       <ScrollView
         contentContainerStyle={{ gap: 12, paddingVertical: 18 }}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={scheme.textMuted} />}
+        refreshControl={
+          <RefreshControl refreshing={sites.isRefetching} onRefresh={sites.refetch} tintColor={scheme.textMuted} />
+        }
       >
-        {isLoading ? <ActivityIndicator color={scheme.textMuted} style={{ marginTop: 30 }} /> : null}
-
-        {data?.map((site: SiteRow) => (
-          <Pressable
-            key={site.id}
-            onPress={() => navigation.navigate('SiteDetail', { siteId: site.id, name: site.name })}
-            style={{
-              backgroundColor: scheme.surface,
-              borderColor: scheme.border,
-              borderWidth: 1,
-              borderRadius: 14,
-              padding: 16,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 12,
-            }}
-          >
-            <View style={{ flex: 1, gap: 3 }}>
-              <Text style={{ color: scheme.text, fontSize: 16, fontWeight: '600' }}>{site.name}</Text>
-              <Text style={{ color: scheme.textMuted, fontSize: 13 }}>
-                {[site.code, site.river, site.status].filter(Boolean).join(' · ')}
-              </Text>
-              {site.project ? (
-                <Text style={{ color: scheme.textMuted, fontSize: 12 }}>
-                  {site.project}
-                  {site.operator ? ` · ${site.operator}` : ''}
-                </Text>
-              ) : null}
-            </View>
-            <ChevronRight color={scheme.textMuted} size={20} />
-          </Pressable>
-        ))}
-
-        {data?.length === 0 ? (
-          <Text style={{ color: scheme.textMuted, fontSize: 14 }}>
-            {name
+        <QueryState
+          query={sites}
+          isEmpty={(value) => value.length === 0}
+          emptyTitle="No sites here"
+          emptyBody={
+            name
               ? 'No sites on this river are in reach of your organisation.'
-              : 'No sites are in reach of your organisation.'}
-          </Text>
-        ) : null}
+              : 'No sites are in reach of your organisation.'
+          }
+          skeletonRows={4}
+        >
+          {(list) => (
+            <>
+              {list.map((site: SiteRow) => (
+                <SiteCard
+                  key={site.id}
+                  site={site}
+                  onPress={() => navigation.navigate('SiteDetail', { siteId: site.id, name: site.name })}
+                />
+              ))}
+            </>
+          )}
+        </QueryState>
       </ScrollView>
     </BrandScreen>
   );
+}
+
+/**
+ * One site, led by who is working it. A cell with no contractor on it is the
+ * thing the programme exists to fix, so it is said plainly rather than left as
+ * a blank line.
+ */
+function SiteCard({ site, onPress }: { site: SiteRow; onPress: () => void }) {
+  const { scheme } = useTheme();
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{
+        backgroundColor: scheme.surface,
+        borderColor: scheme.border,
+        borderWidth: 1,
+        borderRadius: 14,
+        padding: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+      }}
+    >
+      <View style={{ flex: 1, gap: 3 }}>
+        <Text style={{ color: scheme.text, fontSize: 16, fontWeight: '600' }}>{site.name}</Text>
+        <Text style={{ color: scheme.textMuted, fontSize: 13 }}>
+          {[site.code, site.river, site.status].filter(Boolean).join(' · ')}
+        </Text>
+        <Text style={{ color: site.operator ? scheme.textMuted : '#f5a524', fontSize: 12 }}>
+          {[site.project, site.operator ?? 'Not yet allocated'].filter(Boolean).join(' · ')}
+        </Text>
+      </View>
+      <ChevronRight color={scheme.textMuted} size={20} />
+    </Pressable>
+  );
+}
+
+function subtitle(sites: SiteRow[]): string {
+  const unallocated = sites.filter((site) => site.operator === null).length;
+  const count = `${sites.length} ${sites.length === 1 ? 'site' : 'sites'}`;
+
+  return unallocated > 0 ? `${count} · ${unallocated} not yet allocated` : count;
 }

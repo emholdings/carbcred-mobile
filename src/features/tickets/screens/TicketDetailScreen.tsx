@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { Alert, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { errorMessage } from '@api/client';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { LoadState } from '@shared/components/QueryState';
 import { TextField } from '@shared/components/TextField';
 import { Button } from '@shared/components/Button';
 import type { MoreStackParamList } from '@navigation/types';
@@ -34,11 +35,12 @@ export function TicketDetailScreen({ route }: Props) {
   const { ticketId, reference } = route.params;
   const [note, setNote] = useState('');
 
-  const { data, isLoading, refetch, isRefetching } = useQuery({
+  const query = useQuery({
     queryKey: ['ticket', slug, ticketId],
     queryFn: () => fetchTicket(slug!, ticketId),
     enabled: Boolean(slug),
   });
+  const { data, refetch, isRefetching } = query;
 
   const refresh = () => {
     void queryClient.invalidateQueries({ queryKey: ['ticket', slug, ticketId] });
@@ -73,7 +75,7 @@ export function TicketDetailScreen({ route }: Props) {
         keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={scheme.textMuted} />}
       >
-        {isLoading ? <ActivityIndicator color={scheme.textMuted} style={{ marginTop: 30 }} /> : null}
+        <LoadState query={query} rows={4} />
 
         {data ? (
           <>
