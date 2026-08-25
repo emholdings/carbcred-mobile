@@ -1,14 +1,19 @@
 import { useState } from 'react';
-import { Alert, ScrollView, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { useQuery } from '@tanstack/react-query';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Button } from '@shared/components/Button';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { Button } from '@shared/components/Button';
+import { ChoiceField } from '@shared/components/ChoiceField';
+import { DateField, today as todayKey } from '@shared/components/DateField';
 import { TextField } from '@shared/components/TextField';
 import { clientRef } from '@features/capture/clientRef';
 import { useQueueStore } from '@features/capture/queue';
 import type { RiversStackParamList, SiteLogKind } from '@navigation/types';
 import { useAuthStore } from '@stores/authStore';
+import { brand } from '@theme/colors';
 import { useTheme } from '@theme/useTheme';
+import { fetchSite } from '../api';
 
 type Props = NativeStackScreenProps<RiversStackParamList, 'SiteLog'>;
 
@@ -19,10 +24,22 @@ const TITLES: Record<SiteLogKind, string> = {
   complaint: 'Complaint',
 };
 
+/** The server stores an outcome as a slug; these are the words for it. */
+const OUTCOME_LABELS: Record<string, string> = {
+  satisfactory: 'Satisfactory',
+  issues_raised: 'Issues raised',
+  non_compliant: 'Non-compliant',
+};
+
 /**
  * A log kept at a site. Which site is already settled by how you got here —
  * River → Site → this — so the form never asks again, and the endpoint it files
  * to is fixed before a single field is typed.
+ *
+ * Three of the four carry a date: a shift gets written up in the evening, and a
+ * day spent out of signal gets caught up the next morning. A complaint does
+ * not — it is filed the moment it is heard, and asking someone taking a
+ * complaint to first agree a date with the form is the wrong thing to ask.
  */
 export function SiteLogScreen({ route, navigation }: Props) {
   const { scheme } = useTheme();
@@ -34,11 +51,30 @@ export function SiteLogScreen({ route, navigation }: Props) {
   const set = (key: string) => (value: string) => setFields((current) => ({ ...current, [key]: value }));
   const value = (key: string) => fields[key] ?? '';
 
-  const today = new Date().toISOString().slice(0, 10);
+  const [date, setDate] = useState(todayKey());
+
+  /** Everyone added to the register in this sitting, so a name is not typed twice. */
+  const [added, setAdded] = useState<{ name: string; role: string }[]>([]);
+
+  const site = useQuery({
+    queryKey: ['site', slug, siteId],
+    queryFn: () => fetchSite(slug!, siteId),
+    enabled: Boolean(slug),
+  });
+
+  const vocabulary = site.data?.operations.vocabulary;
+  const roles = vocabulary?.attendance_roles ?? [];
+  const outcomes = vocabulary?.inspection_outcomes ?? [];
+
+  const role = value('role') || roles[0] || '';
+  const outcome = value('outcome') || outcomes[0] || '';
+
+  // Who the site already has on the register for the chosen day.
+  const onRegister = (site.data?.operations.attendance ?? []).filter((entry) => entry.attended_on === date);
+
+  const base = `/organisations/${slug}/sites/${siteId}`;
 
   const build = (): { endpoint: string; payload: Record<string, unknown>; label: string } | null => {
-    const base = `/organisations/${slug}/sites/${siteId}`;
-
     if (kind === 'wash-reading') {
       if (!value('tonnes') || Number(value('hours')) <= 0) {
         return null;
@@ -48,7 +84,7 @@ export function SiteLogScreen({ route, navigation }: Props) {
         endpoint: `${base}/readings`,
         label: 'Wash reading',
         payload: {
-          reading_date: today,
+          reading_date: date,
           tonnes_processed: Number(value('tonnes')),
           hours_run: Number(value('hours')),
           ...(value('downtime') ? { downtime_hours: Number(value('downtime')) } : {}),
@@ -63,19 +99,24 @@ export function SiteLogScreen({ route, navigation }: Props) {
     }
 
     if (kind === 'attendance') {
-      if (!value('name').trim() || !value('role').trim()) {
+      if (!value('name').trim() || !role) {
         return null;
       }
 
       return {
         endpoint: `${base}/attendance`,
         label: 'Attendance',
-        payload: { attended_on: today, name: value('name').trim(), role: value('role').trim() },
+        payload: {
+          attended_on: date,
+          name: value('name').trim(),
+          role,
+          ...(value('notes') ? { notes: value('notes').trim() } : {}),
+        },
       };
     }
 
     if (kind === 'inspection') {
-      if (!value('agency').trim() || !value('outcome').trim()) {
+      if (!value('agency').trim() || !outcome) {
         return null;
       }
 
@@ -84,8 +125,8 @@ export function SiteLogScreen({ route, navigation }: Props) {
         label: 'Inspection',
         payload: {
           agency: value('agency').trim(),
-          inspected_on: today,
-          outcome: value('outcome').trim(),
+          inspected_on: date,
+          outcome,
           ...(value('inspector') ? { inspector: value('inspector').trim() } : {}),
           ...(value('findings') ? { findings: value('findings').trim() } : {}),
         },
@@ -101,8 +142,10 @@ export function SiteLogScreen({ route, navigation }: Props) {
       label: 'Complaint',
       payload: {
         description: value('description').trim(),
-        severity: value('severity').trim() || 'medium',
-        ...(value('reporter') ? { reporter_name: value('reporter').trim() } : {}),
+        // Filed unrated: whoever takes a complaint on the ground is not the
+        // person who decides how serious it is. The team grades and groups it
+        // in the register.
+        severity: 'medium',
       },
     };
   };
@@ -124,6 +167,15 @@ export function SiteLogScreen({ route, navigation }: Props) {
       payload: { client_ref: clientRef(), ...write.payload },
     });
 
+    // A register is several people, so attendance stays open and keeps count.
+    // Everything else is one record, and leaving the form up invites a second.
+    if (kind === 'attendance') {
+      setAdded((current) => [...current, { name: value('name').trim(), role }]);
+      setFields((current) => ({ ...current, name: '', notes: '' }));
+
+      return;
+    }
+
     Alert.alert('Logged', 'Saved on the phone. It files itself when you have signal.');
     navigation.goBack();
   };
@@ -131,7 +183,13 @@ export function SiteLogScreen({ route, navigation }: Props) {
   return (
     <BrandScreen title={TITLES[kind]} subtitle={siteName}>
       <ScrollView contentContainerStyle={{ gap: 16, paddingVertical: 18 }} keyboardShouldPersistTaps="handled">
-        <Text style={{ color: scheme.textMuted, fontSize: 13 }}>{today}</Text>
+        {kind === 'complaint' ? (
+          <Text style={{ color: scheme.textMuted, fontSize: 13 }}>
+            Filed today, {todayKey()}. Write what was said — the team grades it and groups it in the register.
+          </Text>
+        ) : (
+          <DateField label="Day" value={date} onChange={setDate} />
+        )}
 
         {kind === 'wash-reading' ? (
           <>
@@ -151,30 +209,119 @@ export function SiteLogScreen({ route, navigation }: Props) {
 
         {kind === 'attendance' ? (
           <>
-            <TextField label="Name" value={value('name')} onChangeText={set('name')} placeholder="Who is here" />
-            <TextField label="Role" value={value('role')} onChangeText={set('role')} placeholder="Eco-ranger" />
+            {onRegister.length || added.length ? (
+              <Register
+                already={onRegister.map((entry) => ({ name: entry.name, role: entry.role }))}
+                added={added}
+              />
+            ) : null}
+
+            <TextField label="Name" value={value('name')} onChangeText={set('name')} placeholder="Who is here" autoCapitalize="words" />
+            <ChoiceField
+              label="Role"
+              choices={roles.map((option) => ({ value: option, label: option }))}
+              value={role}
+              onChange={set('role')}
+            />
+            <TextField label="Notes" value={value('notes')} onChangeText={set('notes')} placeholder="Optional" />
           </>
         ) : null}
 
         {kind === 'inspection' ? (
           <>
             <TextField label="Agency" value={value('agency')} onChangeText={set('agency')} placeholder="EMA" />
-            <TextField label="Outcome" value={value('outcome')} onChangeText={set('outcome')} placeholder="As recorded on the notice" />
+            <ChoiceField
+              label="Outcome"
+              choices={outcomes.map((option) => ({ value: option, label: OUTCOME_LABELS[option] ?? option }))}
+              value={outcome}
+              onChange={set('outcome')}
+            />
             <TextField label="Inspector" value={value('inspector')} onChangeText={set('inspector')} placeholder="Optional" />
-            <TextField label="Findings" value={value('findings')} onChangeText={set('findings')} placeholder="Optional" multiline />
+            <TextField label="Findings" value={value('findings')} onChangeText={set('findings')} placeholder="As recorded on the notice" multiline />
           </>
         ) : null}
 
         {kind === 'complaint' ? (
-          <>
-            <TextField label="What was reported" value={value('description')} onChangeText={set('description')} placeholder="In their words" multiline />
-            <TextField label="Severity" value={value('severity')} onChangeText={set('severity')} placeholder="low, medium or high" />
-            <TextField label="Reported by" value={value('reporter')} onChangeText={set('reporter')} placeholder="Optional" />
-          </>
+          <TextField
+            label="What was reported"
+            value={value('description')}
+            onChangeText={set('description')}
+            placeholder="In their words"
+            multiline
+            style={{
+              backgroundColor: scheme.surface,
+              borderWidth: 1,
+              borderColor: scheme.border,
+              borderRadius: 12,
+              paddingHorizontal: 14,
+              paddingVertical: 13,
+              color: scheme.text,
+              fontSize: 16,
+              minHeight: 160,
+              textAlignVertical: 'top',
+            }}
+          />
         ) : null}
 
-        <Button label="Log it" onPress={file} disabled={!ready} />
+        <Button label={kind === 'attendance' ? 'Add to register' : 'Log it'} onPress={file} disabled={!ready} />
+
+        {kind === 'attendance' && added.length ? (
+          <Pressable onPress={() => navigation.goBack()} style={{ alignItems: 'center', paddingVertical: 6 }}>
+            <Text style={{ color: brand.deepLeaf, fontSize: 15, fontWeight: '700' }}>
+              {`Done · ${added.length} added`}
+            </Text>
+          </Pressable>
+        ) : null}
       </ScrollView>
     </BrandScreen>
+  );
+}
+
+/** Who is already down for this day, and who this sitting has just added. */
+function Register({
+  already,
+  added,
+}: {
+  already: { name: string; role: string }[];
+  added: { name: string; role: string }[];
+}) {
+  const { scheme } = useTheme();
+
+  return (
+    <View
+      style={{
+        backgroundColor: scheme.surface,
+        borderColor: scheme.border,
+        borderWidth: 1,
+        borderRadius: 14,
+        padding: 14,
+        gap: 8,
+      }}
+    >
+      <Text style={{ color: scheme.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 0.4 }}>
+        {`ON THE GROUND · ${already.length + added.length}`}
+      </Text>
+
+      {already.map((person) => (
+        <Row key={`${person.name}-${person.role}`} name={person.name} role={person.role} />
+      ))}
+
+      {added.map((person, index) => (
+        <Row key={`added-${index}-${person.name}`} name={person.name} role={person.role} pending />
+      ))}
+    </View>
+  );
+}
+
+function Row({ name, role, pending = false }: { name: string; role: string; pending?: boolean }) {
+  const { scheme } = useTheme();
+
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+      <Text style={{ color: scheme.text, fontSize: 15, fontWeight: '600', flex: 1 }}>{name}</Text>
+      <Text style={{ color: pending ? brand.deepLeaf : scheme.textMuted, fontSize: 13 }}>
+        {pending ? 'just added' : role}
+      </Text>
+    </View>
   );
 }

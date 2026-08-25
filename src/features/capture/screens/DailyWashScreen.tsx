@@ -3,6 +3,7 @@ import { Alert, ScrollView, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@shared/components/Button';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { DateField, today as todayKey } from '@shared/components/DateField';
 import { TextField } from '@shared/components/TextField';
 import { useAuthStore } from '@stores/authStore';
 import { brand } from '@theme/colors';
@@ -25,6 +26,7 @@ export function DailyWashScreen() {
   const enqueue = useQueueStore((state) => state.enqueue);
 
   const [siteId, setSiteId] = useState<number | null>(null);
+  const [date, setDate] = useState(todayKey());
   const [tonnes, setTonnes] = useState('');
   const [hours, setHours] = useState('');
   const [downtime, setDowntime] = useState('');
@@ -57,7 +59,7 @@ export function DailyWashScreen() {
       context: site.name,
       payload: {
         client_ref: clientRef(),
-        reading_date: new Date().toISOString().slice(0, 10),
+        reading_date: date,
         tonnes_processed: Number(tonnes),
         hours_run: Number(hours),
         ...(downtime ? { downtime_hours: Number(downtime) } : {}),
@@ -66,13 +68,14 @@ export function DailyWashScreen() {
       },
     });
 
+    setDate(todayKey());
     setTonnes('');
     setHours('');
     setDowntime('');
     setRecovered('');
     setNotes('');
 
-    Alert.alert("Today's reading is in", 'Saved on the phone. It files itself when you have signal.');
+    Alert.alert('Reading is in', 'Saved on the phone. It files itself when you have signal.');
   };
 
   return (
@@ -106,6 +109,8 @@ export function DailyWashScreen() {
           <Text style={{ color: scheme.textMuted, fontSize: 14 }}>{operating[0].name}</Text>
         ) : null}
 
+        <DateField label="Day" value={date} onChange={setDate} />
+
         <TextField
           label="Tonnes processed"
           value={tonnes}
@@ -136,7 +141,7 @@ export function DailyWashScreen() {
         />
         <TextField label="Notes" value={notes} onChangeText={setNotes} placeholder="Anything unusual" multiline />
 
-        <Button label="File today's reading" onPress={file} disabled={!canFile} />
+        <Button label={date === todayKey() ? "File today's reading" : `File the reading for ${date}`} onPress={file} disabled={!canFile} />
 
         {operating.length === 0 ? (
           <Text style={{ color: scheme.textMuted, fontSize: 14 }}>

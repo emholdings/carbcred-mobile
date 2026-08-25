@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Linking, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { Check, Circle } from 'lucide-react-native';
+import { Check, Circle, Plus } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BarChart } from '@shared/components/BarChart';
 import { BrandScreen } from '@shared/components/BrandScreen';
@@ -14,13 +14,6 @@ import { useTheme } from '@theme/useTheme';
 import { fetchSite, MOBILIZATION_STEPS, type SiteOperations } from '../api';
 
 type Props = NativeStackScreenProps<RiversStackParamList, 'SiteDetail'>;
-
-const LOGS: { kind: SiteLogKind; label: string }[] = [
-  { kind: 'wash-reading', label: 'Daily wash' },
-  { kind: 'attendance', label: 'Attendance' },
-  { kind: 'inspection', label: 'Inspection' },
-  { kind: 'complaint', label: 'Complaint' },
-];
 
 const SEVERITY_COLOURS: Record<string, string> = {
   high: '#f97066',
@@ -38,6 +31,8 @@ export function SiteDetailScreen({ route, navigation }: Props) {
   const slug = useAuthStore((state) => state.organisationSlug);
   const can = usePermissions();
   const { siteId, name } = route.params;
+
+  const log = (kind: SiteLogKind) => navigation.navigate('SiteLog', { siteId, siteName: name, kind });
 
   const canLog = can('edit-projects') || can('edit-contractors') || can('edit-field');
 
@@ -130,35 +125,32 @@ export function SiteDetailScreen({ route, navigation }: Props) {
               />
             </View>
 
-            {/* One row, four equal shares: these are the four things kept at a
-                site, and a wrapped last button reads as an afterthought. */}
-            {canLog ? (
-              <View style={{ flexDirection: 'row', gap: 6 }}>
-                {LOGS.map((log) => (
-                  <Pressable
-                    key={log.kind}
-                    onPress={() => navigation.navigate('SiteLog', { siteId, siteName: name, kind: log.kind })}
-                    style={{
-                      flex: 1,
-                      backgroundColor: brand.deepLeaf,
-                      borderRadius: 10,
-                      paddingVertical: 11,
-                      paddingHorizontal: 4,
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Text
-                      numberOfLines={1}
-                      adjustsFontSizeToFit
-                      minimumFontScale={0.8}
-                      style={{ color: brand.cream, fontSize: 13, fontWeight: '600' }}
-                    >
-                      {log.label}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            ) : null}
+            <Section
+              title="Wash performance"
+              hint={ops.rated_tph ? `${ops.rated_tph} t/h rated` : undefined}
+              onAdd={canLog ? () => log('wash-reading') : undefined}
+              addLabel="Record a wash reading"
+            >
+              <BarChart bars={sorted.bars} height={100} />
+              {sorted.latest ? (
+                <View style={{ flexDirection: 'row', gap: 18 }}>
+                  <Metric label="Last day" value={`${sorted.latest.actual.toLocaleString()} t`} />
+                  <Metric
+                    label="Expected"
+                    value={sorted.latest.expected ? `${sorted.latest.expected.toLocaleString()} t` : '—'}
+                  />
+                  <Metric
+                    label="Efficiency"
+                    value={sorted.latest.efficiency !== null ? `${sorted.latest.efficiency}%` : '—'}
+                    tone={
+                      sorted.latest.efficiency !== null && sorted.latest.efficiency >= 85
+                        ? brand.deepLeaf
+                        : '#b06a00'
+                    }
+                  />
+                </View>
+              ) : null}
+            </Section>
 
             <Section title="Mobilization">
               {ops.mobilization ? (
@@ -198,29 +190,12 @@ export function SiteDetailScreen({ route, navigation }: Props) {
               )}
             </Section>
 
-            <Section title="Security" count={sorted.guards.length}>
-              {sorted.guards.length ? (
-                <>
-                  {sorted.guards.map((guard) => (
-                    <Line
-                      key={guard.id}
-                      title={guard.name}
-                      detail={`${guard.stage} · since ${guard.deployed_on}`}
-                      trailing={guard.phone ?? undefined}
-                    />
-                  ))}
-                  {ops.mobilization && ops.guards.length < ops.mobilization.required_guards ? (
-                    <Text style={{ color: scheme.danger, fontSize: 13, fontWeight: '600' }}>
-                      {ops.mobilization.required_guards - ops.guards.length} short of the staged requirement.
-                    </Text>
-                  ) : null}
-                </>
-              ) : (
-                <Empty>Nobody deployed.</Empty>
-              )}
-            </Section>
-
-            <Section title="Attendance" count={sorted.attendanceDays.length ? undefined : 0}>
+            <Section
+              title="Attendance"
+              count={sorted.attendanceDays.length ? undefined : 0}
+              onAdd={canLog ? () => log('attendance') : undefined}
+              addLabel="Record who is on the ground"
+            >
               {sorted.attendanceDays.length ? (
                 sorted.attendanceDays.map(([day, people]) => (
                   <View key={day} style={{ gap: 4 }}>
@@ -244,29 +219,12 @@ export function SiteDetailScreen({ route, navigation }: Props) {
               )}
             </Section>
 
-            <Section title="Wash performance" hint={ops.rated_tph ? `${ops.rated_tph} t/h rated` : undefined}>
-              <BarChart bars={sorted.bars} height={100} />
-              {sorted.latest ? (
-                <View style={{ flexDirection: 'row', gap: 18 }}>
-                  <Metric label="Last day" value={`${sorted.latest.actual.toLocaleString()} t`} />
-                  <Metric
-                    label="Expected"
-                    value={sorted.latest.expected ? `${sorted.latest.expected.toLocaleString()} t` : '—'}
-                  />
-                  <Metric
-                    label="Efficiency"
-                    value={sorted.latest.efficiency !== null ? `${sorted.latest.efficiency}%` : '—'}
-                    tone={
-                      sorted.latest.efficiency !== null && sorted.latest.efficiency >= 85
-                        ? brand.deepLeaf
-                        : '#b06a00'
-                    }
-                  />
-                </View>
-              ) : null}
-            </Section>
-
-            <Section title="Inspections" count={sorted.inspections.length}>
+            <Section
+              title="Inspections"
+              count={sorted.inspections.length}
+              onAdd={canLog ? () => log('inspection') : undefined}
+              addLabel="Record an inspection"
+            >
               {sorted.inspections.length ? (
                 sorted.inspections.map((inspection) => (
                   <View key={inspection.id} style={{ gap: 2 }}>
@@ -286,7 +244,12 @@ export function SiteDetailScreen({ route, navigation }: Props) {
               )}
             </Section>
 
-            <Section title="Complaints" count={sorted.complaints.length}>
+            <Section
+              title="Complaints"
+              count={sorted.complaints.length}
+              onAdd={canLog ? () => log('complaint') : undefined}
+              addLabel="Log a complaint"
+            >
               {sorted.complaints.length ? (
                 sorted.complaints.map((complaint) => (
                   <View key={complaint.id} style={{ flexDirection: 'row', gap: 10 }}>
@@ -380,6 +343,28 @@ export function SiteDetailScreen({ route, navigation }: Props) {
                 <Empty>No community representatives chosen for this site.</Empty>
               )}
             </Section>
+
+            <Section title="Security" count={sorted.guards.length}>
+              {sorted.guards.length ? (
+                <>
+                  {sorted.guards.map((guard) => (
+                    <Line
+                      key={guard.id}
+                      title={guard.name}
+                      detail={`${guard.stage} · since ${guard.deployed_on}`}
+                      trailing={guard.phone ?? undefined}
+                    />
+                  ))}
+                  {ops.mobilization && ops.guards.length < ops.mobilization.required_guards ? (
+                    <Text style={{ color: scheme.danger, fontSize: 13, fontWeight: '600' }}>
+                      {ops.mobilization.required_guards - ops.guards.length} short of the staged requirement.
+                    </Text>
+                  ) : null}
+                </>
+              ) : (
+                <Empty>Nobody deployed.</Empty>
+              )}
+            </Section>
           </>
         ) : null}
       </ScrollView>
@@ -424,15 +409,27 @@ function useSortedOperations(ops: SiteOperations | undefined) {
   }, [ops, today]);
 }
 
+/**
+ * One part of the site's record.
+ *
+ * Where something can be added to it, the control sits in this header rather
+ * than in a row of buttons at the top of the page: a plus beside "Attendance"
+ * says what it will add, and a person who has just read a section is already
+ * where they need to be to add to it.
+ */
 function Section({
   title,
   hint,
   count,
+  onAdd,
+  addLabel,
   children,
 }: {
   title: string;
   hint?: string;
   count?: number;
+  onAdd?: () => void;
+  addLabel?: string;
   children: React.ReactNode;
 }) {
   const { scheme } = useTheme();
@@ -464,6 +461,24 @@ function Section({
         ) : null}
         <View style={{ flex: 1 }} />
         {hint ? <Text style={{ color: scheme.textMuted, fontSize: 12 }}>{hint}</Text> : null}
+        {onAdd ? (
+          <Pressable
+            onPress={onAdd}
+            accessibilityRole="button"
+            accessibilityLabel={addLabel ?? `Add to ${title}`}
+            hitSlop={10}
+            style={{
+              width: 30,
+              height: 30,
+              borderRadius: 15,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: brand.deepLeaf,
+            }}
+          >
+            <Plus color={brand.cream} size={18} strokeWidth={3} />
+          </Pressable>
+        ) : null}
       </View>
       {children}
     </View>

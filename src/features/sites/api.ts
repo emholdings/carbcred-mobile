@@ -26,6 +26,12 @@ export type Mobilization = {
 };
 
 export type SiteOperations = {
+  /** The choices each capture form offers, straight from the server. */
+  vocabulary: {
+    attendance_roles: string[];
+    inspection_outcomes: string[];
+    complaint_severities: string[];
+  };
   mobilization: Mobilization | null;
   guards: { id: number; name: string; phone: string | null; stage: string; deployed_on: string }[];
   attendance: { id: number; attended_on: string; name: string; role: string }[];
