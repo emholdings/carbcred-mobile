@@ -3,7 +3,6 @@ import { BadgeCheck, Building2, ChevronRight, FolderKanban, HardHat, LogOut, Pho
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { logout } from '@features/auth/api';
 import { BrandScreen } from '@shared/components/BrandScreen';
-import { press } from '@shared/components/press';
 import type { MoreStackParamList } from '@navigation/types';
 import { usePermissions } from '@shared/hooks/usePermissions';
 import { useAuthStore } from '@stores/authStore';
@@ -121,7 +120,7 @@ export function MoreScreen({ navigation }: Props) {
 
         <Pressable
           onPress={confirmSignOut}
-          style={press({
+          style={{
             flexDirection: 'row',
             alignItems: 'center',
             gap: 12,
@@ -131,7 +130,7 @@ export function MoreScreen({ navigation }: Props) {
             borderRadius: 14,
             padding: 16,
             marginTop: 8,
-          })}
+          }}
         >
           <LogOut color={scheme.danger} size={20} />
           <Text style={{ color: scheme.danger, fontSize: 16, fontWeight: '600' }}>Sign out</Text>
@@ -157,7 +156,7 @@ function Row({
   return (
     <Pressable
       onPress={onPress}
-      style={press({
+      style={{
         flexDirection: 'row',
         alignItems: 'center',
         gap: 12,
@@ -166,7 +165,7 @@ function Row({
         borderWidth: 1,
         borderRadius: 14,
         padding: 16,
-      })}
+      }}
     >
       {icon}
       <View style={{ flex: 1 }}>

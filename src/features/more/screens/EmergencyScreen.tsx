@@ -2,7 +2,6 @@ import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Phone } from 'lucide-react-native';
 import { BrandScreen } from '@shared/components/BrandScreen';
-import { press } from '@shared/components/press';
 import { QueryState } from '@shared/components/QueryState';
 import { useAuthStore } from '@stores/authStore';
 import { useTheme } from '@theme/useTheme';
@@ -45,7 +44,7 @@ export function EmergencyScreen() {
                   disabled={!contact.phone}
                   accessibilityRole="button"
                   accessibilityLabel={`Call ${contact.name}`}
-                  style={press({
+                  style={{
                     backgroundColor: scheme.surface,
                     borderColor: scheme.border,
                     borderWidth: 1,
@@ -54,7 +53,7 @@ export function EmergencyScreen() {
                     flexDirection: 'row',
                     alignItems: 'center',
                     gap: 14,
-                  })}
+                  }}
                 >
                   <View style={{ flex: 1, gap: 3 }}>
                     <Text style={{ color: scheme.text, fontSize: 16, fontWeight: '600' }}>{contact.name}</Text>

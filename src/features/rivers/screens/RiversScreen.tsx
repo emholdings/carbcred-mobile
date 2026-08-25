@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { ChevronRight, Map } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BrandScreen } from '@shared/components/BrandScreen';
-import { press } from '@shared/components/press';
 import { QueryState } from '@shared/components/QueryState';
 import type { RiversStackParamList } from '@navigation/types';
 import { useAuthStore } from '@stores/authStore';
@@ -60,14 +59,14 @@ export function RiversScreen({ navigation }: Props) {
 
         <Pressable
           onPress={() => navigation.navigate('RiverMap')}
-          style={press({
+          style={{
             flexDirection: 'row',
             alignItems: 'center',
             gap: 12,
             backgroundColor: '#3b82f6',
             borderRadius: 14,
             padding: 16,
-          })}
+          }}
         >
           <Map color="#ffffff" size={22} />
           <View style={{ flex: 1 }}>
@@ -103,7 +102,7 @@ export function RiversScreen({ navigation }: Props) {
             river"; this is the same promise, reached from one entry. */}
         <Pressable
           onPress={() => navigation.navigate('RiverSites', {})}
-          style={press({
+          style={{
             backgroundColor: scheme.surface,
             borderColor: scheme.border,
             borderWidth: 1,
@@ -112,7 +111,7 @@ export function RiversScreen({ navigation }: Props) {
             flexDirection: 'row',
             alignItems: 'center',
             gap: 12,
-          })}
+          }}
         >
           <View style={{ flex: 1 }}>
             <Text style={{ color: scheme.text, fontSize: 16, fontWeight: '600' }}>All sites</Text>
@@ -134,7 +133,7 @@ function RiverCard({ river, onPress }: { river: River; onPress: () => void }) {
   return (
     <Pressable
       onPress={onPress}
-      style={press({
+      style={{
         backgroundColor: scheme.surface,
         borderColor: scheme.border,
         borderWidth: 1,
@@ -146,7 +145,7 @@ function RiverCard({ river, onPress }: { river: River; onPress: () => void }) {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 12,
-      })}
+      }}
     >
       <View style={{ flex: 1, gap: 3 }}>
         <Text style={{ color: scheme.text, fontSize: 16, fontWeight: '600' }}>{river.name} River</Text>

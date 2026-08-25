@@ -6,7 +6,6 @@ import { useInboxCount } from '@shared/hooks/useInboxCount';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { brand } from '@theme/colors';
 import { useTheme } from '@theme/useTheme';
-import { press } from './press';
 
 /**
  * The green band every screen opens on.
@@ -56,7 +55,7 @@ export function BrandHeader({
             accessibilityLabel="Back"
             // Generous target: this is tapped with gloves on and one hand.
             hitSlop={12}
-            style={press({
+            style={{
               width: 38,
               height: 38,
               borderRadius: 19,
@@ -64,7 +63,7 @@ export function BrandHeader({
               justifyContent: 'center',
               backgroundColor: 'rgba(250, 247, 241, 0.12)',
               marginLeft: -4,
-            })}
+            }}
           >
             <ChevronLeft color={brand.cream} size={24} />
           </Pressable>
@@ -85,7 +84,6 @@ export function BrandHeader({
               waiting > 0 ? `${waiting} waiting for you` : 'Nothing waiting for you'
             }
             hitSlop={10}
-            style={press()}
           >
             <Bell color={brand.cream} size={22} />
             {waiting > 0 ? (

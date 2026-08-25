@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import { ChevronRight, Plus } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BrandScreen } from '@shared/components/BrandScreen';
-import { press } from '@shared/components/press';
 import { QueryState } from '@shared/components/QueryState';
 import type { MoreStackParamList } from '@navigation/types';
 import { useAuthStore } from '@stores/authStore';
@@ -48,14 +47,14 @@ export function TicketsScreen({ navigation }: Props) {
       >
         <Pressable
           onPress={() => navigation.navigate('LogTicket')}
-          style={press({
+          style={{
             flexDirection: 'row',
             alignItems: 'center',
             gap: 10,
             backgroundColor: brand.deepLeaf,
             borderRadius: 14,
             padding: 15,
-          })}
+          }}
         >
           <Plus color={brand.cream} size={20} />
           <Text style={{ color: brand.cream, fontSize: 16, fontWeight: '700' }}>Log something</Text>
@@ -87,7 +86,7 @@ export function TicketsScreen({ navigation }: Props) {
                 <Pressable
                   key={ticket.id}
                   onPress={() => navigation.navigate('TicketDetail', { ticketId: ticket.id, reference: ticket.reference })}
-                  style={press({
+                  style={{
                     backgroundColor: scheme.surface,
                     borderColor: ticket.is_overdue ? scheme.danger : scheme.border,
                     borderWidth: 1,
@@ -98,7 +97,7 @@ export function TicketsScreen({ navigation }: Props) {
                     flexDirection: 'row',
                     alignItems: 'center',
                     gap: 10,
-                  })}
+                  }}
                 >
                   <View style={{ flex: 1, gap: 3 }}>
                     <Text style={{ color: scheme.text, fontSize: 15, fontWeight: '600' }}>{ticket.title}</Text>
@@ -126,14 +125,14 @@ function Chip({ label: text, on, onPress }: { label: string; on: boolean; onPres
   return (
     <Pressable
       onPress={onPress}
-      style={press({
+      style={{
         backgroundColor: on ? brand.deepLeaf : scheme.surface,
         borderColor: on ? brand.deepLeaf : scheme.border,
         borderWidth: 1,
         borderRadius: 18,
         paddingVertical: 7,
         paddingHorizontal: 13,
-      })}
+      }}
     >
       <Text style={{ color: on ? brand.cream : scheme.text, fontSize: 13, fontWeight: '600' }}>{text}</Text>
     </Pressable>

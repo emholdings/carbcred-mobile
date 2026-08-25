@@ -4,7 +4,6 @@ import { ChevronRight } from 'lucide-react-native';
 import { fetchInbox, type ApprovalItem } from '@features/tasks/api';
 import { BarChart } from '@shared/components/BarChart';
 import { BrandScreen } from '@shared/components/BrandScreen';
-import { press } from '@shared/components/press';
 import { QueryState } from '@shared/components/QueryState';
 import { useAuthStore } from '@stores/authStore';
 import { brand } from '@theme/colors';
@@ -119,7 +118,7 @@ export function HomeScreen({ navigation }: { navigation: { navigate: Navigate } 
                     <Pressable
                       key={`${entry.site.id}-${entry.reason}`}
                       onPress={() => openSite(entry.site)}
-                      style={press({ flexDirection: 'row', alignItems: 'center', gap: 10 })}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
                     >
                       <View style={{ width: 3, height: 30, borderRadius: 2, backgroundColor: '#f5a524' }} />
                       <View style={{ flex: 1, gap: 1 }}>
@@ -196,7 +195,7 @@ function SiteRow({ site, onPress }: { site: SiteMonitor; onPress: () => void }) 
   const quiet = site.daysQuiet === null || site.daysQuiet >= 3;
 
   return (
-    <Pressable onPress={onPress} style={press({ flexDirection: 'row', alignItems: 'center', gap: 10 })}>
+    <Pressable onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
       <View style={{ flex: 1, gap: 2 }}>
         <Text style={{ color: scheme.text, fontSize: 15, fontWeight: '600' }}>{site.name}</Text>
         <Text style={{ color: scheme.textMuted, fontSize: 13 }}>
@@ -287,13 +286,7 @@ function CardTitle({ title, hint, onPress }: { title: string; hint?: string; onP
     </View>
   );
 
-  return onPress ? (
-    <Pressable onPress={onPress} style={press()}>
-      {content}
-    </Pressable>
-  ) : (
-    content
-  );
+  return onPress ? <Pressable onPress={onPress}>{content}</Pressable> : content;
 }
 
 function Metric({ label, value, tone }: { label: string; value: string; tone?: string }) {
