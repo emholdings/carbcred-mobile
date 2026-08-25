@@ -5,6 +5,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BrandScreen } from '@shared/components/BrandScreen';
 import { Button } from '@shared/components/Button';
 import { ChoiceField } from '@shared/components/ChoiceField';
+import { PickerField } from '@shared/components/PickerField';
 import { DateField, today as todayKey } from '@shared/components/DateField';
 import { TextField } from '@shared/components/TextField';
 import { clientRef } from '@features/capture/clientRef';
@@ -23,7 +24,7 @@ type Props = NativeStackScreenProps<RiversStackParamList, 'SiteLog'>;
 
 const TITLES: Record<SiteLogKind, string> = {
   'wash-reading': 'Daily wash',
-  attendance: 'Attendance',
+  attendance: 'Meeting register',
   inspection: 'Inspection',
   complaint: 'Complaint',
 };
@@ -78,13 +79,16 @@ export function SiteLogScreen({ route, navigation }: Props) {
 
   const vocabulary = site.data?.operations.vocabulary;
   const roles = vocabulary?.attendance_roles ?? [];
+  const purposes = vocabulary?.attendance_purposes ?? [];
   const outcomes = vocabulary?.inspection_outcomes ?? [];
-
-  const role = value('role') || roles[0] || '';
-  const outcome = value('outcome') || outcomes[0] || '';
 
   // Who the site already has on the register for the chosen day.
   const onRegister = (site.data?.operations.attendance ?? []).filter((entry) => entry.attended_on === date);
+
+  const role = value('role') || roles[0] || '';
+  const outcome = value('outcome') || outcomes[0] || '';
+  // Whatever the day already says it was, else the first purpose.
+  const purpose = value('purpose') || onRegister[0]?.purpose || purposes[0] || '';
 
   const base = `/organisations/${slug}/sites/${siteId}`;
 
@@ -127,6 +131,9 @@ export function SiteLogScreen({ route, navigation }: Props) {
           attended_on: date,
           name: value('name').trim(),
           role,
+          purpose,
+          ...(value('body') ? { body: value('body').trim() } : {}),
+          ...(value('contact') ? { contact: value('contact').trim() } : {}),
           ...(value('notes') ? { notes: value('notes').trim() } : {}),
         },
       };
@@ -208,7 +215,8 @@ export function SiteLogScreen({ route, navigation }: Props) {
     // Everything else is one record, and leaving the form up invites a second.
     if (kind === 'attendance') {
       setAdded((current) => [...current, { name: value('name').trim(), role }]);
-      setFields((current) => ({ ...current, name: '', notes: '' }));
+      // The meeting and its purpose stay; the person changes.
+      setFields((current) => ({ ...current, name: '', body: '', contact: '', notes: '' }));
 
       return;
     }
@@ -267,12 +275,44 @@ export function SiteLogScreen({ route, navigation }: Props) {
               />
             ) : null}
 
-            <TextField label="Name" value={value('name')} onChangeText={set('name')} placeholder="Who is here" autoCapitalize="words" />
+            {/* Why they gathered, carried on every name signed that day. */}
             <ChoiceField
-              label="Role"
-              choices={roles.map((option) => ({ value: option, label: option }))}
+              label="Why the meeting"
+              choices={purposes.map((option) => ({ value: option, label: option }))}
+              value={purpose}
+              onChange={set('purpose')}
+            />
+
+            <TextField
+              label="Name"
+              value={value('name')}
+              onChangeText={set('name')}
+              placeholder="Who signed"
+              autoCapitalize="words"
+            />
+
+            {/* Seventeen seats around the table: a sheet, not a wall of chips. */}
+            <PickerField
+              label="Seat at the table"
+              options={roles}
               value={role}
               onChange={set('role')}
+              placeholder="Who they speak for"
+            />
+
+            <TextField
+              label="Which body"
+              value={value('body')}
+              onChangeText={set('body')}
+              placeholder="Mazowe RDC, Chidamoyo School…"
+              autoCapitalize="words"
+            />
+            <TextField
+              label="How to reach them"
+              value={value('contact')}
+              onChangeText={set('contact')}
+              placeholder="Phone or email"
+              autoCapitalize="none"
             />
             <TextField label="Notes" value={value('notes')} onChangeText={set('notes')} placeholder="Optional" />
           </>
@@ -344,7 +384,7 @@ function Register({
       }}
     >
       <Text style={{ color: scheme.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 0.4 }}>
-        {`ON THE GROUND · ${already.length + added.length}`}
+        {`SIGNED SO FAR · ${already.length + added.length}`}
       </Text>
 
       {already.map((person) => (

@@ -49,7 +49,7 @@ export type QueuedWrite = {
 export const KIND_LABELS: Record<CaptureKind, string> = {
   'field-submission': 'Field submission',
   'wash-reading': 'Wash reading',
-  attendance: 'Attendance',
+  attendance: 'Meeting register',
   inspection: 'Inspection',
   complaint: 'Complaint',
   message: 'Message',

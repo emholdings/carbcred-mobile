@@ -299,11 +299,14 @@ export function SiteDetailScreen({ route, navigation }: Props) {
               )}
             </Section>
 
+            {/* Not a daily headcount: the register signed when the programme
+                sits down with the community — the DDC, the RDC, the chief, a
+                headmaster, the farmers whose land the river runs past. */}
             <Section
-              title="Attendance"
+              title="Meetings"
               count={sorted.attendanceDays.length ? undefined : 0}
               onAdd={canLog ? () => log('attendance') : undefined}
-              addLabel="Record who is on the ground"
+              addLabel="Record who attended a meeting"
             >
               {sorted.attendanceDays.length ? (
                 <ScrollView style={{ maxHeight: 320 }} nestedScrollEnabled showsVerticalScrollIndicator>
@@ -328,22 +331,33 @@ export function SiteDetailScreen({ route, navigation }: Props) {
                             fontWeight: '700',
                           }}
                         >
-                          {day === sorted.today ? 'Today' : spokenDay(day)}
+                          {people[0]?.purpose ?? (day === sorted.today ? 'Today' : spokenDay(day))}
                         </Text>
                         <View style={{ flex: 1 }} />
                         <Text style={{ color: scheme.textMuted, fontSize: 12, fontWeight: '600' }}>
-                          {`${people.length} on the ground`}
+                          {`${people.length} signed`}
                         </Text>
                       </View>
 
+                      {people[0]?.purpose ? (
+                        <Text style={{ color: scheme.textMuted, fontSize: 12 }}>
+                          {day === sorted.today ? 'Today' : spokenDay(day)}
+                        </Text>
+                      ) : null}
+
                       {people.map((person) => (
-                        <Line key={person.id} title={person.name} detail={person.role} />
+                        <Line
+                          key={person.id}
+                          title={person.name}
+                          detail={[person.role, person.body].filter(Boolean).join(' · ')}
+                          trailing={person.contact ?? undefined}
+                        />
                       ))}
                     </View>
                   ))}
                 </ScrollView>
               ) : (
-                <Empty>Nobody recorded in the last fortnight.</Empty>
+                <Empty>No meeting recorded in the last fortnight.</Empty>
               )}
             </Section>
 
