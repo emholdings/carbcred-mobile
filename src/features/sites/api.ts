@@ -35,7 +35,18 @@ export type SiteOperations = {
   mobilization: Mobilization | null;
   guards: { id: number; name: string; phone: string | null; stage: string; deployed_on: string }[];
   attendance: { id: number; attended_on: string; name: string; role: string }[];
-  performance: { date: string; actual: number; expected: number | null; efficiency: number | null }[];
+  performance: {
+    id: number;
+    date: string;
+    actual: number;
+    expected: number | null;
+    efficiency: number | null;
+    /** unverified · verified · queried — the standing of the number. */
+    status: string;
+    has_photo: boolean;
+    located: boolean;
+  }[];
+  unverified_readings: number;
   rated_tph: number | null;
   inspections: {
     id: number;

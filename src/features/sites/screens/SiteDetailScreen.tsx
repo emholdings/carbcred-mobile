@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Linking, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { Check, Circle, Plus } from 'lucide-react-native';
+import { Camera, Check, Circle, MapPin, Plus, ShieldAlert, ShieldCheck, ShieldQuestion } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BarChart } from '@shared/components/BarChart';
 import { BrandScreen } from '@shared/components/BrandScreen';
@@ -127,11 +127,34 @@ export function SiteDetailScreen({ route, navigation }: Props) {
 
             <Section
               title="Wash performance"
-              hint={ops.rated_tph ? `${ops.rated_tph} t/h rated` : undefined}
+              hint={
+                ops.unverified_readings > 0
+                  ? `${ops.unverified_readings} unverified`
+                  : ops.rated_tph
+                    ? `${ops.rated_tph} t/h rated`
+                    : undefined
+              }
               onAdd={canLog ? () => log('wash-reading') : undefined}
               addLabel="Record a wash reading"
             >
               <BarChart bars={sorted.bars} height={100} />
+
+              {/* Readings, most recent first, each with what stands behind it.
+                  A tonnage and its standing are never shown apart. */}
+              {[...ops.performance].reverse().slice(0, 5).map((reading) => (
+                <View key={reading.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={{ color: scheme.textMuted, fontSize: 13, width: 74, fontVariant: ['tabular-nums'] }}>
+                    {reading.date.slice(5)}
+                  </Text>
+                  <Text style={{ color: scheme.text, fontSize: 14, fontWeight: '600', flex: 1, fontVariant: ['tabular-nums'] }}>
+                    {`${reading.actual.toLocaleString()} t`}
+                  </Text>
+                  {reading.has_photo ? <Camera color={scheme.textMuted} size={13} /> : null}
+                  {reading.located ? <MapPin color={scheme.textMuted} size={13} /> : null}
+                  <Standing status={reading.status} />
+                </View>
+              ))}
+
               {sorted.latest ? (
                 <View style={{ flexDirection: 'row', gap: 18 }}>
                   <Metric label="Last day" value={`${sorted.latest.actual.toLocaleString()} t`} />
@@ -417,6 +440,39 @@ function useSortedOperations(ops: SiteOperations | undefined) {
  * says what it will add, and a person who has just read a section is already
  * where they need to be to add to it.
  */
+/**
+ * Where a reading stands: unverified until somebody who is neither its author
+ * nor the contractor being measured has looked at the evidence.
+ */
+function Standing({ status }: { status: string }) {
+  const { scheme } = useTheme();
+
+  if (status === 'verified') {
+    return (
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+        <ShieldCheck color={brand.deepLeaf} size={14} />
+        <Text style={{ color: brand.deepLeaf, fontSize: 12, fontWeight: '600' }}>Verified</Text>
+      </View>
+    );
+  }
+
+  if (status === 'queried') {
+    return (
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+        <ShieldAlert color={scheme.danger} size={14} />
+        <Text style={{ color: scheme.danger, fontSize: 12, fontWeight: '600' }}>Queried</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+      <ShieldQuestion color="#b06a00" size={14} />
+      <Text style={{ color: '#b06a00', fontSize: 12, fontWeight: '600' }}>Unverified</Text>
+    </View>
+  );
+}
+
 function Section({
   title,
   hint,

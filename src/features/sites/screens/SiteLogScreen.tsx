@@ -8,6 +8,10 @@ import { ChoiceField } from '@shared/components/ChoiceField';
 import { DateField, today as todayKey } from '@shared/components/DateField';
 import { TextField } from '@shared/components/TextField';
 import { clientRef } from '@features/capture/clientRef';
+import { EvidenceFields } from '@features/capture/components/EvidenceFields';
+import { pickPhoto } from '@features/capture/photos';
+import type { QueuedFile } from '@features/capture/types';
+import { useCoordinates } from '@features/capture/useCoordinates';
 import { useQueueStore } from '@features/capture/queue';
 import type { RiversStackParamList, SiteLogKind } from '@navigation/types';
 import { useAuthStore } from '@stores/authStore';
@@ -52,9 +56,19 @@ export function SiteLogScreen({ route, navigation }: Props) {
   const value = (key: string) => fields[key] ?? '';
 
   const [date, setDate] = useState(todayKey());
+  const { coords, locating, locate } = useCoordinates();
+  const [photos, setPhotos] = useState<QueuedFile[]>([]);
 
   /** Everyone added to the register in this sitting, so a name is not typed twice. */
   const [added, setAdded] = useState<{ name: string; role: string }[]>([]);
+
+  const addPhoto = async () => {
+    const photo = await pickPhoto('camera');
+
+    if (photo) {
+      setPhotos((current) => [...current, photo]);
+    }
+  };
 
   const site = useQuery({
     queryKey: ['site', slug, siteId],
@@ -85,6 +99,9 @@ export function SiteLogScreen({ route, navigation }: Props) {
         label: 'Wash reading',
         payload: {
           reading_date: date,
+          // What the phone knows and a keyboard cannot invent.
+          captured_at: new Date().toISOString(),
+          ...(coords ? { latitude: coords.latitude, longitude: coords.longitude } : {}),
           tonnes_processed: Number(value('tonnes')),
           hours_run: Number(value('hours')),
           ...(value('downtime') ? { downtime_hours: Number(value('downtime')) } : {}),
@@ -159,13 +176,33 @@ export function SiteLogScreen({ route, navigation }: Props) {
       return;
     }
 
+    const ref = clientRef();
+
     await enqueue({
       kind,
       endpoint: write.endpoint,
       label: write.label,
       context: siteName,
-      payload: { client_ref: clientRef(), ...write.payload },
+      payload: { client_ref: ref, ...write.payload },
     });
+
+    // The frames cannot know their URL yet: the reading they belong to has not
+    // been filed, so it has no id. They queue behind it and the sync fills
+    // {parent} in once it lands.
+    for (const photo of photos) {
+      await enqueue({
+        kind: 'photo',
+        endpoint: `${base}/readings/{parent}/photos`,
+        dependsOn: ref,
+        file: photo,
+        label: 'Reading photo',
+        context: siteName,
+        payload: {
+          client_ref: clientRef(),
+          ...(coords ? { latitude: coords.latitude, longitude: coords.longitude } : {}),
+        },
+      });
+    }
 
     // A register is several people, so attendance stays open and keeps count.
     // Everything else is one record, and leaving the form up invites a second.
@@ -204,6 +241,20 @@ export function SiteLogScreen({ route, navigation }: Props) {
               placeholder="Leave blank to use the plant's registered rating"
             />
             <TextField label="Notes" value={value('notes')} onChangeText={set('notes')} placeholder="Anything unusual" multiline />
+
+            <EvidenceFields
+              coords={coords}
+              locating={locating}
+              onLocate={locate}
+              photos={photos}
+              onAddPhoto={addPhoto}
+              onRemovePhoto={(uri) => setPhotos((current) => current.filter((photo) => photo.uri !== uri))}
+            />
+
+            <Text style={{ color: scheme.textMuted, fontSize: 12, lineHeight: 18 }}>
+              Every reading is filed unverified. The photograph and the location are what somebody at
+              the desk checks it against.
+            </Text>
           </>
         ) : null}
 

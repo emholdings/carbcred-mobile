@@ -10,6 +10,10 @@ import { brand } from '@theme/colors';
 import { useTheme } from '@theme/useTheme';
 import { fetchSites } from '../api';
 import { clientRef } from '../clientRef';
+import { EvidenceFields } from '../components/EvidenceFields';
+import { pickPhoto } from '../photos';
+import type { QueuedFile } from '../types';
+import { useCoordinates } from '../useCoordinates';
 import { QueueStatus } from '../components/QueueStatus';
 import { useQueueStore } from '../queue';
 
@@ -32,6 +36,16 @@ export function DailyWashScreen() {
   const [downtime, setDowntime] = useState('');
   const [recovered, setRecovered] = useState('');
   const [notes, setNotes] = useState('');
+  const { coords, locating, locate } = useCoordinates();
+  const [photos, setPhotos] = useState<QueuedFile[]>([]);
+
+  const addPhoto = async () => {
+    const photo = await pickPhoto('camera');
+
+    if (photo) {
+      setPhotos((current) => [...current, photo]);
+    }
+  };
 
   const { data: sites } = useQuery({
     queryKey: ['sites', slug],
@@ -52,14 +66,18 @@ export function DailyWashScreen() {
       return;
     }
 
+    const ref = clientRef();
+
     await enqueue({
       kind: 'wash-reading',
       endpoint: `/organisations/${slug}/sites/${site.id}/readings`,
       label: 'Wash reading',
       context: site.name,
       payload: {
-        client_ref: clientRef(),
+        client_ref: ref,
         reading_date: date,
+        captured_at: new Date().toISOString(),
+        ...(coords ? { latitude: coords.latitude, longitude: coords.longitude } : {}),
         tonnes_processed: Number(tonnes),
         hours_run: Number(hours),
         ...(downtime ? { downtime_hours: Number(downtime) } : {}),
@@ -69,6 +87,23 @@ export function DailyWashScreen() {
     });
 
     setDate(todayKey());
+    // The frames queue behind the reading and fill in {parent} once it lands.
+    for (const photo of photos) {
+      await enqueue({
+        kind: 'photo',
+        endpoint: `/organisations/${slug}/sites/${site.id}/readings/{parent}/photos`,
+        dependsOn: ref,
+        file: photo,
+        label: 'Reading photo',
+        context: site.name,
+        payload: {
+          client_ref: clientRef(),
+          ...(coords ? { latitude: coords.latitude, longitude: coords.longitude } : {}),
+        },
+      });
+    }
+
+    setPhotos([]);
     setTonnes('');
     setHours('');
     setDowntime('');
@@ -140,6 +175,15 @@ export function DailyWashScreen() {
           placeholder="Optional"
         />
         <TextField label="Notes" value={notes} onChangeText={setNotes} placeholder="Anything unusual" multiline />
+
+        <EvidenceFields
+          coords={coords}
+          locating={locating}
+          onLocate={locate}
+          photos={photos}
+          onAddPhoto={addPhoto}
+          onRemovePhoto={(uri) => setPhotos((current) => current.filter((photo) => photo.uri !== uri))}
+        />
 
         <Button label={date === todayKey() ? "File today's reading" : `File the reading for ${date}`} onPress={file} disabled={!canFile} />
 
