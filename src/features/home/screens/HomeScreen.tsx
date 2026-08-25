@@ -1,14 +1,15 @@
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
+import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronRight } from 'lucide-react-native';
 import { fetchInbox, type ApprovalItem } from '@features/tasks/api';
 import { BarChart } from '@shared/components/BarChart';
 import { BrandScreen } from '@shared/components/BrandScreen';
-import { usePermissions } from '@shared/hooks/usePermissions';
+import { QueryState } from '@shared/components/QueryState';
 import { useAuthStore } from '@stores/authStore';
 import { brand } from '@theme/colors';
 import { useTheme } from '@theme/useTheme';
-import { fetchDashboard, fetchFocusForContractor, fetchFocusForDelivery } from '../api';
+import { fetchDashboard } from '../api';
+import { fetchMonitoring, needsAttention, type Monitoring, type SiteMonitor } from '../monitoring';
 
 const TONE_COLOURS: Record<string, string> = {
   action: '#f97066',
@@ -18,56 +19,55 @@ const TONE_COLOURS: Record<string, string> = {
   tip: brand.leaf,
 };
 
-export function HomeScreen({ navigation }: { navigation: { navigate: (screen: string) => void } }) {
+type Navigate = (screen: string, params?: object) => void;
+
+/**
+ * Home answers one question: is the operation running?
+ *
+ * That is the wash plants, so the wash plants lead — the week's tonnage across
+ * every site this person can see, then each site's own line, then the ones that
+ * need chasing. Programme phases used to sit at the top; they moved out,
+ * because a phase changes once a quarter and nobody opens a phone to check it.
+ */
+export function HomeScreen({ navigation }: { navigation: { navigate: Navigate } }) {
   const { scheme } = useTheme();
+  const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
   const slug = useAuthStore((state) => state.organisationSlug);
-  const can = usePermissions();
-
-  const seesDelivery = can('view-projects');
 
   const dashboard = useQuery({ queryKey: ['dashboard'], queryFn: fetchDashboard });
   const inbox = useQuery({ queryKey: ['approvals', null], queryFn: () => fetchInbox() });
 
-  const focus = useQuery({
-    queryKey: ['focus', slug, seesDelivery],
-    queryFn: () => (seesDelivery ? fetchFocusForDelivery(slug!) : fetchFocusForContractor(slug!)),
+  const monitoring = useQuery({
+    queryKey: ['monitoring', slug],
+    queryFn: () => fetchMonitoring(queryClient, slug!),
     enabled: Boolean(slug),
   });
 
-  const project = focus.data;
+  const data = monitoring.data;
+  const attention = data ? needsAttention(data) : [];
+  const actions = inbox.data?.items ?? [];
 
-  // The project's own work, not the organisation's admin. A head-office
-  // requisition is somebody's job, but it is not this project's process.
-  const projectActions = (inbox.data?.items ?? []).filter(
-    (item: ApprovalItem) =>
-      project?.projectId != null && (item.meta.project_id as number | null) === project.projectId,
-  );
-
-  const bars = (project?.performance ?? []).slice(-10).map((row) => ({
-    label: row.date.slice(5),
-    actual: row.actual,
-    expected: row.expected,
-  }));
-  const latest = project?.performance.at(-1);
+  const openSite = (site: SiteMonitor) =>
+    navigation.navigate('Rivers', { screen: 'SiteDetail', params: { siteId: site.id, name: site.name } });
 
   const refresh = () => {
     void dashboard.refetch();
     void inbox.refetch();
-    void focus.refetch();
+    void monitoring.refetch();
   };
 
   return (
     <BrandScreen
       title={user?.name ? `Hello, ${user.name.split(' ')[0]}` : 'Welcome back'}
-      subtitle={project?.projectName ?? 'CarbCred Africa'}
+      subtitle={subtitle(data)}
       header={
         <View style={{ flexDirection: 'row', gap: 10 }}>
+          <HeaderStat label="Sites" value={String(data?.sites.length ?? 0)} />
           <HeaderStat
-            label="Phase"
-            value={project?.phases ? `${project.phases.done}/${project.phases.total}` : '—'}
+            label="Reporting"
+            value={data ? `${data.reporting}/${data.sites.length}` : '—'}
           />
-          <HeaderStat label="Sites" value={String(project?.siteCount ?? 0)} />
           <HeaderStat label="On you" value={String(inbox.data?.counts.total ?? 0)} />
         </View>
       }
@@ -76,65 +76,77 @@ export function HomeScreen({ navigation }: { navigation: { navigate: (screen: st
         contentContainerStyle={{ gap: 16, paddingVertical: 18 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={dashboard.isRefetching} onRefresh={refresh} tintColor={scheme.textMuted} />
+          <RefreshControl refreshing={monitoring.isRefetching} onRefresh={refresh} tintColor={scheme.textMuted} />
         }
       >
-        {focus.isLoading ? <ActivityIndicator color={scheme.textMuted} style={{ marginTop: 30 }} /> : null}
+        <QueryState
+          query={monitoring}
+          isEmpty={(value) => value.sites.length === 0}
+          emptyTitle="No sites yet"
+          emptyBody="Once a site is registered on a river, its daily wash shows up here."
+          skeletonRows={4}
+        >
+          {(value) => (
+            <>
+              {/* The whole operation's week, in one chart. */}
+              <Card>
+                <CardTitle title="Daily wash" hint="all sites" onPress={() => navigation.navigate('Rivers')} />
+                <BarChart bars={value.series} />
+                <View style={{ flexDirection: 'row', gap: 18 }}>
+                  <Metric label="This week" value={`${Math.round(value.tonnesThisWeek).toLocaleString()} t`} />
+                  <Metric
+                    label="vs last week"
+                    value={change(value.tonnesThisWeek, value.tonnesLastWeek)}
+                    tone={value.tonnesThisWeek >= value.tonnesLastWeek ? brand.deepLeaf : '#f5a524'}
+                  />
+                  <Metric label="Sites washing" value={`${value.reporting} of ${value.sites.length}`} />
+                </View>
+              </Card>
 
-        {/* Where the project is in its process. */}
-        {project?.phases ? (
-          <Card>
-            <CardTitle
-              title="Process"
-              hint={`${Math.round((project.phases.done / Math.max(project.phases.total, 1)) * 100)}%`}
-              onPress={() => navigation.navigate('More')}
-            />
-            <View style={{ height: 8, borderRadius: 4, backgroundColor: scheme.border, overflow: 'hidden' }}>
-              <View
-                style={{
-                  width: `${(project.phases.done / Math.max(project.phases.total, 1)) * 100}%`,
-                  height: 8,
-                  backgroundColor: brand.deepLeaf,
-                }}
-              />
-            </View>
-            <Text style={{ color: scheme.textMuted, fontSize: 14 }}>
-              {project.phases.done} of {project.phases.total} phases complete
-              {project.phases.current ? ` · now on ${project.phases.current}` : ''}
-            </Text>
-          </Card>
-        ) : null}
+              {/* Each site's own line — one river can hold several. */}
+              <Card>
+                <CardTitle title="By site" hint={`${value.rivers} ${value.rivers === 1 ? 'river' : 'rivers'}`} />
+                {value.sites.map((site) => (
+                  <SiteRow key={site.id} site={site} onPress={() => openSite(site)} />
+                ))}
+              </Card>
 
-        {/* The daily number the operation is judged on. */}
-        {bars.length > 0 ? (
-          <Card>
-            <CardTitle title="Daily wash" hint={project?.siteName ?? undefined} />
-            <BarChart bars={bars} />
-            {latest ? (
-              <View style={{ flexDirection: 'row', gap: 18 }}>
-                <Metric label="Last day" value={`${latest.actual.toLocaleString()} t`} />
-                <Metric label="Expected" value={latest.expected ? `${latest.expected.toLocaleString()} t` : '—'} />
-                <Metric
-                  label="Efficiency"
-                  value={latest.efficiency !== null ? `${latest.efficiency}%` : '—'}
-                  tone={latest.efficiency !== null && latest.efficiency >= 85 ? brand.deepLeaf : '#f5a524'}
-                />
-              </View>
-            ) : null}
-          </Card>
-        ) : null}
+              {attention.length > 0 ? (
+                <Card>
+                  <CardTitle title="Needs attention" hint={String(attention.length)} />
+                  {attention.slice(0, 5).map((entry) => (
+                    <Pressable
+                      key={`${entry.site.id}-${entry.reason}`}
+                      onPress={() => openSite(entry.site)}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
+                    >
+                      <View style={{ width: 3, height: 30, borderRadius: 2, backgroundColor: '#f5a524' }} />
+                      <View style={{ flex: 1, gap: 1 }}>
+                        <Text style={{ color: scheme.text, fontSize: 15, fontWeight: '600' }}>{entry.site.name}</Text>
+                        <Text style={{ color: scheme.textMuted, fontSize: 13 }}>{entry.reason}</Text>
+                      </View>
+                      <ChevronRight color={scheme.textMuted} size={18} />
+                    </Pressable>
+                  ))}
+                </Card>
+              ) : null}
+            </>
+          )}
+        </QueryState>
 
-        {projectActions.length > 0 ? (
+        {actions.length > 0 ? (
           <Card>
             <CardTitle
               title="Action items"
-              hint={`${projectActions.length} on this project`}
+              hint={`${actions.length} waiting`}
               onPress={() => navigation.navigate('Tasks')}
             />
-            {projectActions.slice(0, 4).map((item) => (
+            {actions.slice(0, 4).map((item: ApprovalItem) => (
               <View key={`${item.type}-${item.id}`} style={{ gap: 1 }}>
                 <Text style={{ color: scheme.text, fontSize: 15, fontWeight: '600' }}>{item.title}</Text>
-                <Text style={{ color: scheme.textMuted, fontSize: 13 }}>{item.awaiting}</Text>
+                <Text style={{ color: scheme.textMuted, fontSize: 13 }}>
+                  {[item.meta.project as string | undefined, item.awaiting].filter(Boolean).join(' · ')}
+                </Text>
               </View>
             ))}
           </Card>
@@ -175,6 +187,73 @@ export function HomeScreen({ navigation }: { navigation: { navigate: (screen: st
       </ScrollView>
     </BrandScreen>
   );
+}
+
+/** One site's week: what it washed, how well, and when it last said anything. */
+function SiteRow({ site, onPress }: { site: SiteMonitor; onPress: () => void }) {
+  const { scheme } = useTheme();
+  const quiet = site.daysQuiet === null || site.daysQuiet >= 3;
+
+  return (
+    <Pressable onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={{ color: scheme.text, fontSize: 15, fontWeight: '600' }}>{site.name}</Text>
+        <Text style={{ color: scheme.textMuted, fontSize: 13 }}>
+          {[site.river ? `${site.river} river` : null, site.operator ?? 'Not yet allocated']
+            .filter(Boolean)
+            .join(' · ')}
+        </Text>
+      </View>
+
+      <View style={{ alignItems: 'flex-end', gap: 2 }}>
+        <Text style={{ color: scheme.text, fontSize: 15, fontWeight: '700' }}>
+          {site.tonnesThisWeek > 0 ? `${Math.round(site.tonnesThisWeek).toLocaleString()} t` : '—'}
+        </Text>
+        <Text style={{ color: quiet ? '#f5a524' : scheme.textMuted, fontSize: 12 }}>
+          {lastSeen(site)}
+        </Text>
+      </View>
+
+      <ChevronRight color={scheme.textMuted} size={18} />
+    </Pressable>
+  );
+}
+
+function subtitle(data: Monitoring | undefined): string {
+  if (!data) {
+    return 'CarbCred Africa';
+  }
+
+  const sites = `${data.sites.length} ${data.sites.length === 1 ? 'site' : 'sites'}`;
+  const rivers = `${data.rivers} ${data.rivers === 1 ? 'river' : 'rivers'}`;
+
+  return data.unallocated > 0 ? `${sites} on ${rivers} · ${data.unallocated} unallocated` : `${sites} on ${rivers}`;
+}
+
+function lastSeen(site: SiteMonitor): string {
+  if (site.daysQuiet === null) {
+    return 'No readings';
+  }
+
+  if (site.daysQuiet === 0) {
+    return 'Washed today';
+  }
+
+  if (site.daysQuiet === 1) {
+    return 'Yesterday';
+  }
+
+  return `${site.daysQuiet} days ago`;
+}
+
+function change(current: number, previous: number): string {
+  if (previous === 0) {
+    return current > 0 ? 'new' : '—';
+  }
+
+  const percentage = Math.round(((current - previous) / previous) * 100);
+
+  return `${percentage > 0 ? '+' : ''}${percentage}%`;
 }
 
 function Card({ children }: { children: React.ReactNode }) {
