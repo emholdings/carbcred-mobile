@@ -237,7 +237,13 @@ export function SiteLogScreen({ route, navigation }: Props) {
               onChange={set('outcome')}
             />
             <TextField label="Inspector" value={value('inspector')} onChangeText={set('inspector')} placeholder="Optional" />
-            <TextField label="Findings" value={value('findings')} onChangeText={set('findings')} placeholder="As recorded on the notice" multiline />
+            <TextField
+              label="Findings"
+              value={value('findings')}
+              onChangeText={set('findings')}
+              placeholder="As recorded on the notice"
+              tall
+            />
           </>
         ) : null}
 
@@ -247,19 +253,7 @@ export function SiteLogScreen({ route, navigation }: Props) {
             value={value('description')}
             onChangeText={set('description')}
             placeholder="In their words"
-            multiline
-            style={{
-              backgroundColor: scheme.surface,
-              borderWidth: 1,
-              borderColor: scheme.border,
-              borderRadius: 12,
-              paddingHorizontal: 14,
-              paddingVertical: 13,
-              color: scheme.text,
-              fontSize: 16,
-              minHeight: 160,
-              textAlignVertical: 'top',
-            }}
+            tall
           />
         ) : null}
 
