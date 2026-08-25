@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronRight } from 'lucide-react-native';
@@ -45,6 +46,7 @@ export function HomeScreen({ navigation }: { navigation: { navigate: Navigate } 
   });
 
   const data = monitoring.data;
+  const [chosenBar, setChosenBar] = useState<number | null>(null);
   const attention = data ? needsAttention(data) : [];
   const actions = inbox.data?.items ?? [];
 
@@ -91,7 +93,27 @@ export function HomeScreen({ navigation }: { navigation: { navigate: Navigate } 
               {/* The whole operation's week, in one chart. */}
               <Card>
                 <CardTitle title="Daily wash" hint="all sites" onPress={() => navigation.navigate('Rivers')} />
-                <BarChart bars={value.series} />
+                <BarChart
+                  bars={value.series}
+                  selected={chosenBar}
+                  onSelect={(index) => setChosenBar((current) => (current === index ? null : index))}
+                />
+
+                {/* A tapped day names itself: on a phone there is no hover, and
+                    the day worth asking about is the odd-looking one. */}
+                {chosenBar !== null && value.series[chosenBar] ? (
+                  <View style={{ backgroundColor: scheme.background, borderRadius: 12, padding: 12, gap: 4 }}>
+                    <Text style={{ color: scheme.text, fontSize: 14, fontWeight: '700' }}>
+                      {value.series[chosenBar].label}
+                    </Text>
+                    <Text style={{ color: scheme.textMuted, fontSize: 13 }}>
+                      {`${Math.round(value.series[chosenBar].actual).toLocaleString()} t washed across all sites`}
+                      {value.series[chosenBar].expected
+                        ? ` · ${Math.round(value.series[chosenBar].expected!).toLocaleString()} t expected`
+                        : ''}
+                    </Text>
+                  </View>
+                ) : null}
                 <View style={{ flexDirection: 'row', gap: 18 }}>
                   <Metric label="This week" value={`${Math.round(value.tonnesThisWeek).toLocaleString()} t`} />
                   <Metric

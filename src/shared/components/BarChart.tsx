@@ -1,5 +1,5 @@
 import { Text, View } from 'react-native';
-import Svg, { Line, Rect } from 'react-native-svg';
+import Svg, { G, Line, Rect } from 'react-native-svg';
 import { brand } from '@theme/colors';
 import { useTheme } from '@theme/useTheme';
 
@@ -12,8 +12,24 @@ export type Bar = { label: string; actual: number; expected: number | null };
  * between them is the thing you see — which is the only question a wash-plant
  * chart is ever asked. No axis labels: at this size they cost more room than
  * they return, and the numbers that matter are called out beneath.
+ *
+ * A bar can be tapped. On a phone there is no hover and no tooltip, so a chart
+ * that cannot be interrogated is only ever a shape — the day you are squinting
+ * at is the day you want the numbers for. The whole slot is the target, not the
+ * bar: a thin bar on a bad day is the hardest one to hit and the most likely to
+ * be asked about.
  */
-export function BarChart({ bars, height = 120 }: { bars: Bar[]; height?: number }) {
+export function BarChart({
+  bars,
+  height = 120,
+  selected = null,
+  onSelect,
+}: {
+  bars: Bar[];
+  height?: number;
+  selected?: number | null;
+  onSelect?: (index: number) => void;
+}) {
   const { scheme } = useTheme();
 
   if (bars.length === 0) {
@@ -34,9 +50,13 @@ export function BarChart({ bars, height = 120 }: { bars: Bar[]; height?: number 
           const x = index * slot + (slot - barWidth) / 2;
           const actualHeight = Math.max((bar.actual / peak) * (height - 6), 1);
           const expectedHeight = bar.expected ? Math.max((bar.expected / peak) * (height - 6), 1) : 0;
+          const chosen = selected === index;
 
           return (
-            <View key={bar.label}>
+            <G key={bar.label + index} onPress={onSelect ? () => onSelect(index) : undefined}>
+              {/* The whole column takes the tap, not just the drawn bar. */}
+              <Rect x={index * slot} y={0} width={slot} height={height} fill="transparent" />
+
               {bar.expected ? (
                 <Rect
                   x={x}
@@ -50,15 +70,16 @@ export function BarChart({ bars, height = 120 }: { bars: Bar[]; height?: number 
                   rx="1"
                 />
               ) : null}
+
               <Rect
                 x={x}
                 y={height - 1 - actualHeight}
                 width={barWidth}
                 height={actualHeight}
-                fill={brand.leaf}
+                fill={chosen ? brand.deepLeaf : brand.leaf}
                 rx="1"
               />
-            </View>
+            </G>
           );
         })}
       </Svg>

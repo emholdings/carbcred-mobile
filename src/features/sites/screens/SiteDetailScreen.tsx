@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Linking, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Camera, Check, Circle, MapPin, Plus, ShieldAlert, ShieldCheck, ShieldQuestion } from 'lucide-react-native';
@@ -45,6 +45,7 @@ export function SiteDetailScreen({ route, navigation }: Props) {
 
   const ops = data?.operations;
   const sorted = useSortedOperations(ops);
+  const [chosenBar, setChosenBar] = useState<number | null>(null);
 
   return (
     <BrandScreen
@@ -127,33 +128,56 @@ export function SiteDetailScreen({ route, navigation }: Props) {
 
             <Section
               title="Wash performance"
-              hint={
-                ops.unverified_readings > 0
-                  ? `${ops.unverified_readings} unverified`
-                  : ops.rated_tph
-                    ? `${ops.rated_tph} t/h rated`
-                    : undefined
-              }
-              onAdd={canLog ? () => log('wash-reading') : undefined}
-              addLabel="Record a wash reading"
+              hint={ops.rated_tph ? `${ops.rated_tph} t/h rated` : undefined}
             >
-              <BarChart bars={sorted.bars} height={100} />
+              <BarChart
+                bars={sorted.bars}
+                height={100}
+                selected={chosenBar}
+                onSelect={(index) => setChosenBar((current) => (current === index ? null : index))}
+              />
 
-              {/* Readings, most recent first, each with what stands behind it.
-                  A tonnage and its standing are never shown apart. */}
-              {[...ops.performance].reverse().slice(0, 5).map((reading) => (
-                <View key={reading.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <Text style={{ color: scheme.textMuted, fontSize: 13, width: 74, fontVariant: ['tabular-nums'] }}>
-                    {reading.date.slice(5)}
-                  </Text>
-                  <Text style={{ color: scheme.text, fontSize: 14, fontWeight: '600', flex: 1, fontVariant: ['tabular-nums'] }}>
-                    {`${reading.actual.toLocaleString()} t`}
-                  </Text>
-                  {reading.has_photo ? <Camera color={scheme.textMuted} size={13} /> : null}
-                  {reading.located ? <MapPin color={scheme.textMuted} size={13} /> : null}
-                  <Standing status={reading.status} />
+              {/* What the tapped day actually was. There is no hover on a phone,
+                  so a chart nobody can interrogate is only ever a shape. */}
+              {chosenBar !== null && sorted.charted[chosenBar] ? (
+                <View
+                  style={{
+                    backgroundColor: scheme.background,
+                    borderRadius: 12,
+                    padding: 12,
+                    gap: 6,
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Text style={{ color: scheme.text, fontSize: 14, fontWeight: '700', flex: 1 }}>
+                      {sorted.charted[chosenBar].date}
+                    </Text>
+                    <Standing status={sorted.charted[chosenBar].status} />
+                  </View>
+                  <View style={{ flexDirection: 'row', gap: 18 }}>
+                    <Metric label="Washed" value={`${sorted.charted[chosenBar].actual.toLocaleString()} t`} />
+                    <Metric
+                      label="Expected"
+                      value={
+                        sorted.charted[chosenBar].expected
+                          ? `${sorted.charted[chosenBar].expected!.toLocaleString()} t`
+                          : '—'
+                      }
+                    />
+                    <Metric
+                      label="Efficiency"
+                      value={
+                        sorted.charted[chosenBar].efficiency !== null
+                          ? `${sorted.charted[chosenBar].efficiency}%`
+                          : '—'
+                      }
+                      tone={
+                        (sorted.charted[chosenBar].efficiency ?? 0) >= 85 ? brand.deepLeaf : '#b06a00'
+                      }
+                    />
+                  </View>
                 </View>
-              ))}
+              ) : null}
 
               {sorted.latest ? (
                 <View style={{ flexDirection: 'row', gap: 18 }}>
@@ -173,6 +197,61 @@ export function SiteDetailScreen({ route, navigation }: Props) {
                   />
                 </View>
               ) : null}
+            </Section>
+
+            {/* The readings themselves, out of the chart's card: a list is read
+                a row at a time, and every row has to carry its own standing. */}
+            <Section
+              title="Readings"
+              count={ops.performance.length}
+              hint={ops.unverified_readings > 0 ? `${ops.unverified_readings} unverified` : undefined}
+              onAdd={canLog ? () => log('wash-reading') : undefined}
+              addLabel="Record a wash reading"
+            >
+              {ops.performance.length ? (
+                [...ops.performance].reverse().map((reading, index) => (
+                  <View
+                    key={reading.id}
+                    style={{
+                      gap: 5,
+                      paddingTop: index === 0 ? 0 : 11,
+                      borderTopWidth: index === 0 ? 0 : 1,
+                      borderTopColor: scheme.border,
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
+                      <Text style={{ color: scheme.text, fontSize: 16, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
+                        {`${reading.actual.toLocaleString()} t`}
+                      </Text>
+                      <Text style={{ color: scheme.textMuted, fontSize: 13, flex: 1, fontVariant: ['tabular-nums'] }}>
+                        {reading.expected ? `of ${reading.expected.toLocaleString()} t expected` : 'no plant rating'}
+                      </Text>
+                      <Text
+                        style={{
+                          color: reading.efficiency !== null && reading.efficiency >= 85 ? brand.deepLeaf : '#b06a00',
+                          fontSize: 14,
+                          fontWeight: '700',
+                          fontVariant: ['tabular-nums'],
+                        }}
+                      >
+                        {reading.efficiency !== null ? `${reading.efficiency}%` : '—'}
+                      </Text>
+                    </View>
+
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Text style={{ color: scheme.textMuted, fontSize: 13, fontVariant: ['tabular-nums'] }}>
+                        {reading.date}
+                      </Text>
+                      {reading.has_photo ? <Camera color={scheme.textMuted} size={13} /> : null}
+                      {reading.located ? <MapPin color={scheme.textMuted} size={13} /> : null}
+                      <View style={{ flex: 1 }} />
+                      <Standing status={reading.status} />
+                    </View>
+                  </View>
+                ))
+              ) : (
+                <Empty>No readings filed yet.</Empty>
+              )}
             </Section>
 
             <Section title="Mobilization">
@@ -422,6 +501,7 @@ function useSortedOperations(ops: SiteOperations | undefined) {
       complaints: [...(ops?.complaints ?? [])].sort((a, b) => b.received_on.localeCompare(a.received_on)),
       representatives: [...(ops?.representatives ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
       // Chronological, because a trend read right to left is a trick question.
+      charted: performance.slice(-10),
       bars: performance.slice(-10).map((row) => ({
         label: row.date.slice(5),
         actual: row.actual,
