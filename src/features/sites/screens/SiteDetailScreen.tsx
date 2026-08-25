@@ -130,20 +130,31 @@ export function SiteDetailScreen({ route, navigation }: Props) {
               />
             </View>
 
+            {/* One row, four equal shares: these are the four things kept at a
+                site, and a wrapped last button reads as an afterthought. */}
             {canLog ? (
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              <View style={{ flexDirection: 'row', gap: 6 }}>
                 {LOGS.map((log) => (
                   <Pressable
                     key={log.kind}
                     onPress={() => navigation.navigate('SiteLog', { siteId, siteName: name, kind: log.kind })}
                     style={{
+                      flex: 1,
                       backgroundColor: brand.deepLeaf,
                       borderRadius: 10,
-                      paddingVertical: 10,
-                      paddingHorizontal: 14,
+                      paddingVertical: 11,
+                      paddingHorizontal: 4,
+                      alignItems: 'center',
                     }}
                   >
-                    <Text style={{ color: brand.cream, fontSize: 14, fontWeight: '600' }}>{log.label}</Text>
+                    <Text
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.8}
+                      style={{ color: brand.cream, fontSize: 13, fontWeight: '600' }}
+                    >
+                      {log.label}
+                    </Text>
                   </Pressable>
                 ))}
               </View>
