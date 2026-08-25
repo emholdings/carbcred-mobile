@@ -1,5 +1,5 @@
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
-import { BadgeCheck, Building2, ChevronRight, FolderKanban, HardHat, LogOut, Phone, ShieldCheck, Ticket } from 'lucide-react-native';
+import { BadgeCheck, Building2, ChevronRight, FolderKanban, HardHat, LogOut, Phone, ShieldCheck, Smartphone, Ticket } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { logout } from '@features/auth/api';
 import { BrandScreen } from '@shared/components/BrandScreen';
@@ -116,6 +116,12 @@ export function MoreScreen({ navigation }: Props) {
           label="Verify a site"
           hint="Scan a board's QR code"
           onPress={() => navigation.navigate('Verify')}
+        />
+        <Row
+          icon={<Smartphone color={brand.deepLeaf} size={20} />}
+          label="Handsets"
+          hint="Phones signed in as you — cut off a lost one"
+          onPress={() => navigation.navigate('Devices')}
         />
 
         <Pressable

@@ -41,6 +41,7 @@ export type MoreStackParamList = {
   Verify: undefined;
   Engagements: undefined;
   Organisation: undefined;
+  Devices: undefined;
   Tickets: undefined;
   TicketDetail: { ticketId: number; reference: string };
   LogTicket: undefined;
