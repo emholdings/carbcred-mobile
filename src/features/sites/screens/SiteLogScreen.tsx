@@ -27,6 +27,28 @@ const TITLES: Record<SiteLogKind, string> = {
   attendance: 'Meeting register',
   inspection: 'Inspection',
   complaint: 'Complaint',
+  permit: 'Permit',
+  equipment: 'Equipment',
+  cost: 'Site cost',
+};
+
+/** The kit a river cell stands on, in words rather than slugs. */
+const EQUIPMENT_LABELS: Record<string, string> = {
+  wash_plant: 'Wash plant',
+  generator: 'Generator',
+  sand_pump: 'Sand pump',
+  water_pump: 'Water pump',
+  borehole: 'Borehole',
+  excavator: 'Excavator',
+  other: 'Other',
+};
+
+const UNIT_LABELS: Record<string, string> = {
+  tph: 'tonnes/hour',
+  kva: 'kVA',
+  hp: 'horsepower',
+  kw: 'kW',
+  m3ph: 'm³/hour',
 };
 
 /** The server stores an outcome as a slug; these are the words for it. */
@@ -89,6 +111,13 @@ export function SiteLogScreen({ route, navigation }: Props) {
   const outcome = value('outcome') || outcomes[0] || '';
   // Whatever the day already says it was, else the first purpose.
   const purpose = value('purpose') || onRegister[0]?.purpose || purposes[0] || '';
+
+  const categories = vocabulary?.cost_categories ?? [];
+  const equipmentTypes = vocabulary?.equipment_types ?? [];
+  const equipmentUnits = vocabulary?.equipment_units ?? [];
+  const costCategory = value('category') || categories[0] || '';
+  const equipmentType = value('type') || equipmentTypes[0] || '';
+  const equipmentUnit = value('unit') || equipmentUnits[0] || '';
 
   const base = `/organisations/${slug}/sites/${siteId}`;
 
@@ -153,6 +182,62 @@ export function SiteLogScreen({ route, navigation }: Props) {
           outcome,
           ...(value('inspector') ? { inspector: value('inspector').trim() } : {}),
           ...(value('findings') ? { findings: value('findings').trim() } : {}),
+        },
+      };
+    }
+
+    if (kind === 'permit') {
+      if (!value('type').trim()) {
+        return null;
+      }
+
+      return {
+        endpoint: `${base}/permits`,
+        label: 'Permit',
+        payload: {
+          type: value('type').trim(),
+          ...(value('reference') ? { reference: value('reference').trim() } : {}),
+          ...(value('authority') ? { issuing_authority: value('authority').trim() } : {}),
+          issued_on: date,
+          ...(value('expires') ? { expires_on: value('expires') } : {}),
+          ...(value('notes') ? { notes: value('notes').trim() } : {}),
+        },
+      };
+    }
+
+    if (kind === 'equipment') {
+      if (!equipmentType) {
+        return null;
+      }
+
+      return {
+        endpoint: `${base}/equipment`,
+        label: 'Equipment',
+        payload: {
+          type: equipmentType,
+          quantity: Number(value('quantity') || 1),
+          ...(value('label') ? { label: value('label').trim() } : {}),
+          ...(value('rating') ? { rating: Number(value('rating')), unit: equipmentUnit } : {}),
+          ...(value('notes') ? { notes: value('notes').trim() } : {}),
+        },
+      };
+    }
+
+    if (kind === 'cost') {
+      if (!value('amount') || !value('description').trim() || !costCategory) {
+        return null;
+      }
+
+      return {
+        endpoint: `${base}/costs`,
+        label: 'Site cost',
+        payload: {
+          paid_on: date,
+          category: costCategory,
+          description: value('description').trim(),
+          amount: Number(value('amount')),
+          ...(value('paidTo') ? { paid_to: value('paidTo').trim() } : {}),
+          ...(value('reference') ? { reference: value('reference').trim() } : {}),
         },
       };
     }
@@ -228,12 +313,16 @@ export function SiteLogScreen({ route, navigation }: Props) {
   return (
     <BrandScreen title={TITLES[kind]} subtitle={siteName}>
       <ScrollView contentContainerStyle={{ gap: 16, paddingVertical: 18 }} keyboardShouldPersistTaps="handled">
-        {kind === 'complaint' ? (
+        {kind === 'equipment' ? null : kind === 'complaint' ? (
           <Text style={{ color: scheme.textMuted, fontSize: 13 }}>
             Filed today, {todayKey()}. Write what was said — the team grades it and groups it in the register.
           </Text>
         ) : (
-          <DateField label="Day" value={date} onChange={setDate} />
+          <DateField
+            label={kind === 'cost' ? 'Paid on' : kind === 'permit' ? 'Issued on' : 'Day'}
+            value={date}
+            onChange={setDate}
+          />
         )}
 
         {kind === 'wash-reading' ? (
@@ -346,6 +435,82 @@ export function SiteLogScreen({ route, navigation }: Props) {
             placeholder="In their words"
             tall
           />
+        ) : null}
+
+        {kind === 'permit' ? (
+          <>
+            <TextField
+              label="Permit"
+              value={value('type')}
+              onChangeText={set('type')}
+              placeholder="EIA certificate, mining licence…"
+            />
+            <TextField label="Reference" value={value('reference')} onChangeText={set('reference')} placeholder="As printed on it" />
+            <TextField label="Issued by" value={value('authority')} onChangeText={set('authority')} placeholder="EMA, Ministry of Mines…" />
+            <DateField label="Expires" value={value('expires') || date} onChange={set('expires')} />
+            <Text style={{ color: scheme.textMuted, fontSize: 12, lineHeight: 18 }}>
+              The expiry is what the compliance calendar watches, so a permit filed without one is a
+              permit nobody will chase.
+            </Text>
+            <TextField label="Notes" value={value('notes')} onChangeText={set('notes')} placeholder="Optional" />
+          </>
+        ) : null}
+
+        {kind === 'equipment' ? (
+          <>
+            <PickerField
+              label="What arrived"
+              options={equipmentTypes}
+              value={equipmentType}
+              onChange={set('type')}
+            />
+            <TextField label="Name it" value={value('label')} onChangeText={set('label')} placeholder="Second wash plant" />
+            <TextField
+              label="Rating"
+              value={value('rating')}
+              onChangeText={set('rating')}
+              keyboardType="decimal-pad"
+              placeholder="60"
+            />
+            <ChoiceField
+              label="Rated in"
+              choices={equipmentUnits.map((option) => ({ value: option, label: UNIT_LABELS[option] ?? option }))}
+              value={equipmentUnit}
+              onChange={set('unit')}
+            />
+            <TextField
+              label="How many"
+              value={value('quantity')}
+              onChangeText={set('quantity')}
+              keyboardType="number-pad"
+              placeholder="1"
+            />
+            <Text style={{ color: scheme.textMuted, fontSize: 12, lineHeight: 18 }}>
+              A plant's rating is what expected output is calculated from, so this changes the number
+              the site is judged by.
+            </Text>
+          </>
+        ) : null}
+
+        {kind === 'cost' ? (
+          <>
+            <PickerField label="What for" options={categories} value={costCategory} onChange={set('category')} />
+            <TextField
+              label="Description"
+              value={value('description')}
+              onChangeText={set('description')}
+              placeholder="Diesel 400L, monitoring allowance…"
+            />
+            <TextField label="Paid to" value={value('paidTo')} onChangeText={set('paidTo')} placeholder="Who received it" />
+            <TextField
+              label="Amount"
+              value={value('amount')}
+              onChangeText={set('amount')}
+              keyboardType="decimal-pad"
+              placeholder="250"
+            />
+            <TextField label="Receipt number" value={value('reference')} onChangeText={set('reference')} placeholder="Optional" />
+          </>
         ) : null}
 
         <Button label={kind === 'attendance' ? 'Add to register' : 'Log it'} onPress={file} disabled={!ready} />

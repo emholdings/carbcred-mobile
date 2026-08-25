@@ -438,7 +438,12 @@ export function SiteDetailScreen({ route, navigation }: Props) {
               </Pressable>
             ) : null}
 
-            <Section title="Permits" count={data.permits.length}>
+            <Section
+              title="Permits"
+              count={data.permits.length}
+              onAdd={canLog ? () => log('permit') : undefined}
+              addLabel="Record a permit"
+            >
               {data.permits.length ? (
                 data.permits.map((permit) => {
                   const expired = permit.expires_on !== null && permit.expires_on < sorted.today;
@@ -472,7 +477,75 @@ export function SiteDetailScreen({ route, navigation }: Props) {
               )}
             </Section>
 
-            <Section title="Representatives" count={sorted.representatives.length}>
+            <Section
+              title="Equipment"
+              count={data.equipment.length}
+              onAdd={canLog ? () => log('equipment') : undefined}
+              addLabel="Record equipment"
+            >
+              {data.equipment.length ? (
+                data.equipment.map((item) => (
+                  <Line
+                    key={item.id}
+                    title={item.label ?? equipmentName(item.type)}
+                    detail={[
+                      equipmentName(item.type),
+                      item.quantity > 1 ? `× ${item.quantity}` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                    trailing={item.rating ? `${item.rating} ${item.unit ?? ''}`.trim() : undefined}
+                  />
+                ))
+              ) : (
+                <Empty>No kit recorded on this site.</Empty>
+              )}
+            </Section>
+
+            {/* What this cell costs to run — the money that actually moves on a
+                river, beside what it washes. */}
+            <Section
+              title="Site costs"
+              hint={ops.costs_this_month > 0 ? `${money(ops.costs_this_month)} this month` : undefined}
+              onAdd={canLog ? () => log('cost') : undefined}
+              addLabel="Record a site cost"
+            >
+              {ops.costs.length ? (
+                <ScrollView style={{ maxHeight: 280 }} nestedScrollEnabled showsVerticalScrollIndicator>
+                  {ops.costs.map((cost, index) => (
+                    <View
+                      key={cost.id}
+                      style={{
+                        gap: 3,
+                        paddingTop: index === 0 ? 0 : 10,
+                        marginTop: index === 0 ? 0 : 10,
+                        borderTopWidth: index === 0 ? 0 : 1,
+                        borderTopColor: scheme.border,
+                      }}
+                    >
+                      <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
+                        <Text style={{ color: scheme.text, fontSize: 15, fontWeight: '600', flex: 1 }}>
+                          {cost.description}
+                        </Text>
+                        <Text style={{ color: scheme.text, fontSize: 15, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
+                          {money(cost.amount)}
+                        </Text>
+                      </View>
+                      <Text style={{ color: scheme.textMuted, fontSize: 12 }}>
+                        {[cost.paid_on, cost.category, cost.paid_to].filter(Boolean).join(' · ')}
+                      </Text>
+                    </View>
+                  ))}
+                </ScrollView>
+              ) : (
+                <Empty>Nothing recorded against this site yet.</Empty>
+              )}
+            </Section>
+
+            <Section
+              title="Representatives"
+              count={sorted.representatives.length}
+            >
               {sorted.representatives.length ? (
                 sorted.representatives.map((person) => (
                   <Line
@@ -564,6 +637,16 @@ function useSortedOperations(ops: SiteOperations | undefined) {
  * Where a reading stands: unverified until somebody who is neither its author
  * nor the contractor being measured has looked at the evidence.
  */
+/** The kit a river cell stands on, in words rather than slugs. */
+function equipmentName(type: string): string {
+  return type.replace(/_/g, ' ').replace(/^./, (first) => first.toUpperCase());
+}
+
+/** Whole dollars: cents on a river are noise. */
+function money(amount: number): string {
+  return `$${Math.round(amount).toLocaleString()}`;
+}
+
 function spokenDay(day: string): string {
   const [year, month, date] = day.split('-').map(Number);
 

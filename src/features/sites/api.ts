@@ -30,6 +30,9 @@ export type SiteOperations = {
   vocabulary: {
     attendance_roles: string[];
     attendance_purposes: string[];
+    cost_categories: string[];
+    equipment_types: string[];
+    equipment_units: string[];
     inspection_outcomes: string[];
     complaint_severities: string[];
   };
@@ -73,6 +76,16 @@ export type SiteOperations = {
   complaints: { id: number; reference: string; status: string; severity: string; description: string; received_on: string }[];
   open_complaints: number;
   representatives: { id: number; name: string; designation: string; body: string | null; kind: string | null }[];
+  /** What this cell cost to run, most recent first. */
+  costs: {
+    id: number;
+    paid_on: string;
+    category: string | null;
+    description: string;
+    paid_to: string | null;
+    amount: number;
+  }[];
+  costs_this_month: number;
 };
 
 export type SiteDetail = SiteRow & {

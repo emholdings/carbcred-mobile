@@ -11,6 +11,9 @@ export type CaptureKind =
   | 'attendance'
   | 'inspection'
   | 'complaint'
+  | 'permit'
+  | 'equipment'
+  | 'cost'
   | 'message'
   | 'photo';
 
@@ -52,6 +55,9 @@ export const KIND_LABELS: Record<CaptureKind, string> = {
   attendance: 'Meeting register',
   inspection: 'Inspection',
   complaint: 'Complaint',
+  permit: 'Permit',
+  equipment: 'Equipment',
+  cost: 'Site cost',
   message: 'Message',
   photo: 'Photo',
 };

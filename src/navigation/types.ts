@@ -27,7 +27,15 @@ export type RiversStackParamList = {
   SiteLog: { siteId: number; siteName: string; kind: SiteLogKind };
 };
 
-export type SiteLogKind = 'wash-reading' | 'attendance' | 'inspection' | 'complaint';
+export type SiteLogKind =
+  | 'wash-reading'
+  | 'attendance'
+  | 'inspection'
+  | 'complaint'
+  /** The rest of the site's record, learned standing on the ground. */
+  | 'permit'
+  | 'equipment'
+  | 'cost';
 
 export type CaptureStackParamList = {
   CaptureMenu: undefined;
