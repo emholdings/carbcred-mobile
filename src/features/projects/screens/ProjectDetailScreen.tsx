@@ -2,6 +2,7 @@ import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { useQuery } from '@tanstack/react-query';
 import { Check, ChevronRight, Circle, CircleDot, MessageSquare } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { press } from '@shared/components/press';
 import { LoadState } from '@shared/components/QueryState';
 import { Screen } from '@shared/components/Screen';
 import type { MoreStackParamList } from '@navigation/types';
@@ -52,7 +53,7 @@ export function ProjectDetailScreen({ route, navigation }: Props) {
 
         <Pressable
           onPress={() => navigation.navigate('Discussion', { projectSlug: slug, name })}
-          style={{
+          style={press({
             flexDirection: 'row',
             alignItems: 'center',
             gap: 10,
@@ -61,7 +62,7 @@ export function ProjectDetailScreen({ route, navigation }: Props) {
             borderWidth: 1,
             borderRadius: 14,
             padding: 14,
-          }}
+          })}
         >
           <MessageSquare color={brand.deepLeaf} size={20} />
           <Text style={{ color: scheme.text, fontSize: 15, fontWeight: '600', flex: 1 }}>Discussion</Text>

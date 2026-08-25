@@ -3,6 +3,7 @@ import { Alert, Pressable, RefreshControl, ScrollView, Text, View } from 'react-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { errorMessage } from '@api/client';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { press } from '@shared/components/press';
 import { QueryState } from '@shared/components/QueryState';
 import { useTheme } from '@theme/useTheme';
 import { decide, fetchInbox, TYPE_LABELS, type ApprovalItem, type ApprovalType } from '../api';
@@ -149,14 +150,14 @@ function Chip({
   return (
     <Pressable
       onPress={onPress}
-      style={{
+      style={press({
         backgroundColor: selected ? scheme.accent : scheme.surface,
         borderColor: selected ? scheme.accent : scheme.border,
         borderWidth: 1,
         borderRadius: 20,
         paddingVertical: 8,
         paddingHorizontal: 14,
-      }}
+      })}
     >
       <Text style={{ color: selected ? scheme.onPrimary : scheme.text, fontSize: 14, fontWeight: '600' }}>
         {label} {count > 0 ? `(${count})` : ''}
@@ -184,7 +185,7 @@ function Action({
     <Pressable
       onPress={onPress}
       disabled={disabled}
-      style={{
+      style={press({
         flex: 1,
         alignItems: 'center',
         paddingVertical: 11,
@@ -193,7 +194,7 @@ function Action({
         backgroundColor: outline ? 'transparent' : tone,
         borderWidth: 1,
         borderColor: tone,
-      }}
+      })}
     >
       <Text style={{ color: outline ? tone : scheme.onPrimary, fontSize: 15, fontWeight: '600' }}>{label}</Text>
     </Pressable>

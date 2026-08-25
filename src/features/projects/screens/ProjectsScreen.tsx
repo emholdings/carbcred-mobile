@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ChevronRight } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { press } from '@shared/components/press';
 import { QueryState } from '@shared/components/QueryState';
 import type { MoreStackParamList } from '@navigation/types';
 import { useAuthStore } from '@stores/authStore';
@@ -41,7 +42,7 @@ export function ProjectsScreen({ navigation }: Props) {
                 <Pressable
                   key={project.id}
                   onPress={() => navigation.navigate('ProjectDetail', { slug: project.slug, name: project.name })}
-                  style={{
+                  style={press({
                     backgroundColor: scheme.surface,
                     borderColor: scheme.border,
                     borderWidth: 1,
@@ -50,7 +51,7 @@ export function ProjectsScreen({ navigation }: Props) {
                     flexDirection: 'row',
                     alignItems: 'center',
                     gap: 12,
-                  }}
+                  })}
                 >
                   <View style={{ flex: 1, gap: 3 }}>
                     <Text style={{ color: scheme.text, fontSize: 16, fontWeight: '600' }}>{project.name}</Text>

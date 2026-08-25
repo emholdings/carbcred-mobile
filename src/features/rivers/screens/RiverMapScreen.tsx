@@ -4,6 +4,7 @@ import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { useQuery } from '@tanstack/react-query';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { press } from '@shared/components/press';
 import { LoadState } from '@shared/components/QueryState';
 import { fetchSites, type SiteRow } from '@features/sites/api';
 import type { RiversStackParamList } from '@navigation/types';
@@ -102,14 +103,14 @@ export function RiverMapScreen({ navigation }: Props) {
         {selected ? (
           <Pressable
             onPress={() => navigation.navigate('SiteDetail', { siteId: selected.id, name: selected.name })}
-            style={{
+            style={press({
               backgroundColor: scheme.surface,
               borderColor: scheme.border,
               borderWidth: 1,
               borderRadius: 14,
               padding: 14,
               gap: 3,
-            }}
+            })}
           >
             <Text style={{ color: scheme.text, fontSize: 16, fontWeight: '700' }}>{selected.name}</Text>
             <Text style={{ color: scheme.textMuted, fontSize: 13 }}>

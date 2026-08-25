@@ -4,9 +4,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { errorMessage } from '@api/client';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { Button } from '@shared/components/Button';
+import { press } from '@shared/components/press';
 import { LoadState } from '@shared/components/QueryState';
 import { TextField } from '@shared/components/TextField';
-import { Button } from '@shared/components/Button';
 import type { MoreStackParamList } from '@navigation/types';
 import { useAuthStore } from '@stores/authStore';
 import { brand } from '@theme/colors';
@@ -136,7 +137,7 @@ export function TicketDetailScreen({ route }: Props) {
                       key={status}
                       onPress={() => move.mutate(status)}
                       disabled={busy}
-                      style={{
+                      style={press({
                         backgroundColor: scheme.surface,
                         borderColor: brand.deepLeaf,
                         borderWidth: 1,
@@ -144,7 +145,7 @@ export function TicketDetailScreen({ route }: Props) {
                         paddingVertical: 10,
                         paddingHorizontal: 14,
                         opacity: busy ? 0.5 : 1,
-                      }}
+                      })}
                     >
                       <Text style={{ color: brand.deepLeaf, fontSize: 14, fontWeight: '600' }}>{label(status)}</Text>
                     </Pressable>

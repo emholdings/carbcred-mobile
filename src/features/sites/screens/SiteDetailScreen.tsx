@@ -5,6 +5,7 @@ import { Check, Circle } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BarChart } from '@shared/components/BarChart';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { press } from '@shared/components/press';
 import { LoadState } from '@shared/components/QueryState';
 import { usePermissions } from '@shared/hooks/usePermissions';
 import type { RiversStackParamList, SiteLogKind } from '@navigation/types';
@@ -136,12 +137,12 @@ export function SiteDetailScreen({ route, navigation }: Props) {
                   <Pressable
                     key={log.kind}
                     onPress={() => navigation.navigate('SiteLog', { siteId, siteName: name, kind: log.kind })}
-                    style={{
+                    style={press({
                       backgroundColor: brand.deepLeaf,
                       borderRadius: 10,
                       paddingVertical: 10,
                       paddingHorizontal: 14,
-                    }}
+                    })}
                   >
                     <Text style={{ color: brand.cream, fontSize: 14, fontWeight: '600' }}>{log.label}</Text>
                   </Pressable>
@@ -304,14 +305,14 @@ export function SiteDetailScreen({ route, navigation }: Props) {
             {data.verify_url && canLog ? (
               <Pressable
                 onPress={() => Linking.openURL(data.verify_url)}
-                style={{
+                style={press({
                   backgroundColor: scheme.surface,
                   borderColor: scheme.border,
                   borderWidth: 1,
                   borderRadius: 14,
                   padding: 14,
                   gap: 3,
-                }}
+                })}
               >
                 <Text style={{ color: scheme.text, fontSize: 14, fontWeight: '600' }}>
                   Public verification page

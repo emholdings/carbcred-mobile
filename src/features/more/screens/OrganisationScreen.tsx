@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Check, Home } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { press } from '@shared/components/press';
 import type { MoreStackParamList } from '@navigation/types';
 import { useAuthStore } from '@stores/authStore';
 import { brand } from '@theme/colors';
@@ -58,7 +59,7 @@ export function OrganisationScreen({ navigation }: Props) {
               onPress={() => choose(organisation.slug)}
               accessibilityRole="radio"
               accessibilityState={{ selected }}
-              style={{
+              style={press({
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 12,
@@ -67,7 +68,7 @@ export function OrganisationScreen({ navigation }: Props) {
                 borderWidth: selected ? 2 : 1,
                 borderRadius: 14,
                 padding: 16,
-              }}
+              })}
             >
               <View style={{ flex: 1, gap: 2 }}>
                 <Text style={{ color: scheme.text, fontSize: 16, fontWeight: selected ? '700' : '500' }}>

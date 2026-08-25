@@ -3,8 +3,9 @@ import { ActivityIndicator, Alert, Image, Pressable, ScrollView, Text, View } fr
 import * as Location from 'expo-location';
 import { useQuery } from '@tanstack/react-query';
 import { Camera, ImagePlus, MapPin, X } from 'lucide-react-native';
-import { Button } from '@shared/components/Button';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { Button } from '@shared/components/Button';
+import { press } from '@shared/components/press';
 import { TextField } from '@shared/components/TextField';
 import { useAuthStore } from '@stores/authStore';
 import { useTheme } from '@theme/useTheme';
@@ -192,7 +193,7 @@ export function CaptureScreen() {
         <Field label="Where">
           <Pressable
             onPress={takeLocation}
-            style={{
+            style={press({
               flexDirection: 'row',
               alignItems: 'center',
               gap: 8,
@@ -201,7 +202,7 @@ export function CaptureScreen() {
               borderWidth: 1,
               borderRadius: 12,
               padding: 14,
-            }}
+            })}
           >
             <MapPin color={coords ? scheme.accent : scheme.textMuted} size={18} />
             <Text style={{ color: coords ? scheme.text : scheme.textMuted, fontSize: 15 }}>
@@ -225,7 +226,7 @@ export function CaptureScreen() {
                 <Pressable
                   onPress={() => setPhotos((current) => current.filter((item) => item.uri !== photo.uri))}
                   hitSlop={8}
-                  style={{
+                  style={press({
                     position: 'absolute',
                     top: -6,
                     right: -6,
@@ -235,7 +236,7 @@ export function CaptureScreen() {
                     backgroundColor: scheme.danger,
                     alignItems: 'center',
                     justifyContent: 'center',
-                  }}
+                  })}
                 >
                   <X color="#ffffff" size={13} strokeWidth={3} />
                 </Pressable>
@@ -244,7 +245,7 @@ export function CaptureScreen() {
 
             <Pressable
               onPress={() => addPhoto('camera')}
-              style={{
+              style={press({
                 width: 72,
                 height: 72,
                 borderRadius: 10,
@@ -253,13 +254,13 @@ export function CaptureScreen() {
                 backgroundColor: scheme.surface,
                 alignItems: 'center',
                 justifyContent: 'center',
-              }}
+              })}
             >
               <Camera color={scheme.textMuted} size={22} />
             </Pressable>
             <Pressable
               onPress={() => addPhoto('library')}
-              style={{
+              style={press({
                 width: 72,
                 height: 72,
                 borderRadius: 10,
@@ -268,7 +269,7 @@ export function CaptureScreen() {
                 backgroundColor: scheme.surface,
                 alignItems: 'center',
                 justifyContent: 'center',
-              }}
+              })}
             >
               <ImagePlus color={scheme.textMuted} size={22} />
             </Pressable>
@@ -320,7 +321,7 @@ function Choice({
       onPress={onPress}
       accessibilityRole="radio"
       accessibilityState={{ selected }}
-      style={{
+      style={press({
         backgroundColor: selected ? scheme.accent : scheme.surface,
         borderColor: selected ? scheme.accent : scheme.border,
         borderWidth: 1,
@@ -328,7 +329,7 @@ function Choice({
         paddingVertical: 11,
         paddingHorizontal: 14,
         flexGrow: compact ? 0 : 1,
-      }}
+      })}
     >
       <Text style={{ color: selected ? scheme.onPrimary : scheme.text, fontSize: 15, fontWeight: selected ? '600' : '400' }}>
         {label}

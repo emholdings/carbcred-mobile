@@ -2,6 +2,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { ChevronRight, Droplets, Sprout } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { press } from '@shared/components/press';
 import type { CaptureStackParamList } from '@navigation/types';
 import { brand } from '@theme/colors';
 import { useTheme } from '@theme/useTheme';
@@ -65,7 +66,7 @@ export function CaptureMenuScreen({ navigation }: Props) {
                       : 'Waiting for signal'}
                 </Text>
                 {item.status === 'failed' ? (
-                  <Pressable onPress={() => retry(item.payload.client_ref)}>
+                  <Pressable onPress={() => retry(item.payload.client_ref)} style={press()}>
                     <Text style={{ color: brand.deepLeaf, fontSize: 13, fontWeight: '700', marginTop: 2 }}>
                       Try again
                     </Text>
@@ -96,7 +97,7 @@ function Option({
   return (
     <Pressable
       onPress={onPress}
-      style={{
+      style={press({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 14,
@@ -105,7 +106,7 @@ function Option({
         borderWidth: 1,
         borderRadius: 14,
         padding: 16,
-      }}
+      })}
     >
       {icon}
       <View style={{ flex: 1 }}>

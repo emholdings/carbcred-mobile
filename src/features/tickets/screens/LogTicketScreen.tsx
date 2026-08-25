@@ -4,8 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as Location from 'expo-location';
 import { MapPin } from 'lucide-react-native';
-import { Button } from '@shared/components/Button';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { Button } from '@shared/components/Button';
+import { press } from '@shared/components/press';
 import { TextField } from '@shared/components/TextField';
 import { clientRef } from '@features/capture/clientRef';
 import { useQueueStore } from '@features/capture/queue';
@@ -109,14 +110,14 @@ export function LogTicketScreen({ navigation }: Props) {
                 <Pressable
                   key={option}
                   onPress={() => setPriority(priority === option ? null : option)}
-                  style={{
+                  style={press({
                     backgroundColor: priority === option ? PRIORITY_COLOURS[option] : scheme.surface,
                     borderColor: PRIORITY_COLOURS[option],
                     borderWidth: 1,
                     borderRadius: 10,
                     paddingVertical: 9,
                     paddingHorizontal: 14,
-                  }}
+                  })}
                 >
                   <Text
                     style={{
@@ -151,7 +152,7 @@ export function LogTicketScreen({ navigation }: Props) {
 
         <Pressable
           onPress={takeLocation}
-          style={{
+          style={press({
             flexDirection: 'row',
             alignItems: 'center',
             gap: 8,
@@ -160,7 +161,7 @@ export function LogTicketScreen({ navigation }: Props) {
             borderWidth: 1,
             borderRadius: 12,
             padding: 14,
-          }}
+          })}
         >
           <MapPin color={coords ? brand.deepLeaf : scheme.textMuted} size={18} />
           <Text style={{ color: coords ? scheme.text : scheme.textMuted, fontSize: 15 }}>
@@ -203,14 +204,14 @@ function Choice({
   return (
     <Pressable
       onPress={onPress}
-      style={{
+      style={press({
         backgroundColor: selected ? brand.deepLeaf : scheme.surface,
         borderColor: selected ? brand.deepLeaf : scheme.border,
         borderWidth: 1,
         borderRadius: 12,
         padding: 13,
         gap: 1,
-      }}
+      })}
     >
       <Text style={{ color: selected ? brand.cream : scheme.text, fontSize: 15, fontWeight: '600' }}>{label}</Text>
       <Text style={{ color: selected ? 'rgba(250,247,241,0.75)' : scheme.textMuted, fontSize: 12 }}>{hint}</Text>
