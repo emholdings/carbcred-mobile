@@ -76,6 +76,8 @@ export type SiteOperations = {
   complaints: { id: number; reference: string; status: string; severity: string; description: string; received_on: string }[];
   open_complaints: number;
   representatives: { id: number; name: string; designation: string; body: string | null; kind: string | null }[];
+  /** People already named on an engagement body in this province. */
+  available_people: { id: number; label: string }[];
   /** What this cell cost to run, most recent first. */
   costs: {
     id: number;

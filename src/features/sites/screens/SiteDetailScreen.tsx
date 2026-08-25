@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
-import { Linking, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
-import { Camera, Check, Circle, MapPin, Plus, ShieldAlert, ShieldCheck, ShieldQuestion } from 'lucide-react-native';
+import { Alert, FlatList, Linking, Modal, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Camera, Check, Circle, MapPin, Plus, ShieldAlert, ShieldCheck, ShieldQuestion, X } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { api, errorMessage } from '@api/client';
 import { BarChart } from '@shared/components/BarChart';
 import { BrandScreen } from '@shared/components/BrandScreen';
 import { LoadState } from '@shared/components/QueryState';
@@ -46,6 +47,8 @@ export function SiteDetailScreen({ route, navigation }: Props) {
   const ops = data?.operations;
   const sorted = useSortedOperations(ops);
   const [chosenBar, setChosenBar] = useState<number | null>(null);
+  const [naming, setNaming] = useState(false);
+  const queryClient = useQueryClient();
 
   return (
     <BrandScreen
@@ -542,9 +545,14 @@ export function SiteDetailScreen({ route, navigation }: Props) {
               )}
             </Section>
 
+            {/* Naming a representative is picking somebody already on an
+                engagement body, not typing a new person: the organogram is the
+                system of record and this is a link into it. */}
             <Section
               title="Representatives"
               count={sorted.representatives.length}
+              onAdd={canLog && ops.available_people.length > 0 ? () => setNaming(true) : undefined}
+              addLabel="Name a representative for this site"
             >
               {sorted.representatives.length ? (
                 sorted.representatives.map((person) => (
@@ -583,6 +591,29 @@ export function SiteDetailScreen({ route, navigation }: Props) {
           </>
         ) : null}
       </ScrollView>
+
+      {/* Naming a representative goes straight to the server rather than through
+          the offline queue: the pool it picks from was fetched online anyway, so
+          there is nothing useful to queue against. */}
+      {ops ? (
+        <NameRepresentative
+          visible={naming}
+          people={ops.available_people}
+          onClose={() => setNaming(false)}
+          onPick={async (personId) => {
+            setNaming(false);
+
+            try {
+              await api.post(`/organisations/${slug}/sites/${siteId}/representatives`, {
+                stakeholder_person_id: personId,
+              });
+              await queryClient.invalidateQueries({ queryKey: ['site', slug, siteId] });
+            } catch (error) {
+              Alert.alert('Not named', errorMessage(error, 'That representative was not linked.'));
+            }
+          }}
+        />
+      ) : null}
     </BrandScreen>
   );
 }
@@ -645,6 +676,65 @@ function equipmentName(type: string): string {
 /** Whole dollars: cents on a river are noise. */
 function money(amount: number): string {
   return `$${Math.round(amount).toLocaleString()}`;
+}
+
+/** The engagement bodies' people, to pick one for this site. */
+function NameRepresentative({
+  visible,
+  people,
+  onClose,
+  onPick,
+}: {
+  visible: boolean;
+  people: { id: number; label: string }[];
+  onClose: () => void;
+  onPick: (id: number) => void;
+}) {
+  const { scheme } = useTheme();
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+      <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(14, 43, 30, 0.45)' }}>
+        <View
+          style={{
+            backgroundColor: scheme.background,
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            paddingTop: 14,
+            paddingBottom: 28,
+            maxHeight: '75%',
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, paddingBottom: 10 }}>
+            <Text style={{ color: scheme.text, fontSize: 17, fontWeight: '700', flex: 1 }}>
+              Who speaks for this site
+            </Text>
+            <Pressable onPress={onClose} hitSlop={10} accessibilityLabel="Close">
+              <X color={scheme.textMuted} size={22} />
+            </Pressable>
+          </View>
+
+          <FlatList
+            data={people}
+            keyExtractor={(person) => String(person.id)}
+            renderItem={({ item }) => (
+              <Pressable
+                onPress={() => onPick(item.id)}
+                style={{
+                  paddingHorizontal: 18,
+                  paddingVertical: 15,
+                  borderTopWidth: 1,
+                  borderTopColor: scheme.border,
+                }}
+              >
+                <Text style={{ color: scheme.text, fontSize: 15 }}>{item.label}</Text>
+              </Pressable>
+            )}
+          />
+        </View>
+      </View>
+    </Modal>
+  );
 }
 
 function spokenDay(day: string): string {
