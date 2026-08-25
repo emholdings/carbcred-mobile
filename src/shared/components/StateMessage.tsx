@@ -38,15 +38,17 @@ export function StateMessage({
       {action && onAction ? (
         <Pressable
           onPress={onAction}
-          style={({ pressed }) => ({
+          // A plain object, not the ({ pressed }) => ... form: NativeWind
+          // processes every style prop and drops the function, taking the whole
+          // style with it — a button with no border on no background.
+          style={{
             marginTop: 8,
             paddingVertical: 10,
             paddingHorizontal: 18,
             borderRadius: 10,
             borderWidth: 1,
             borderColor: brand.deepLeaf,
-            opacity: pressed ? 0.6 : 1,
-          })}
+          }}
         >
           <Text style={{ color: brand.deepLeaf, fontSize: 14, fontWeight: '700' }}>{action}</Text>
         </Pressable>

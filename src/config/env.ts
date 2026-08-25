@@ -1,21 +1,39 @@
+import Constants from 'expo-constants';
+
 /**
  * Where the app talks to.
  *
- * Development points at the machine's LAN address rather than Herd's
- * `carbcred-system.test`: a simulator can resolve a .test host through the Mac's
- * resolver, but a real handset on the same wifi cannot, and the first time this
- * app runs on a physical phone is not the moment to discover that. The LAN
- * address works for both.
+ * In development the API host is taken from whichever machine served this
+ * bundle — Metro tells the app its own address, and the API runs on that same
+ * machine. It used to be a hardcoded LAN IP, which is wrong the first morning
+ * the router hands the Mac a different one: every request goes to an address
+ * nobody answers, `/me` never lands, and the app sits signed in with no user
+ * and a blank screen. Nothing about that failure says "wrong IP".
  *
- * Override without touching code by setting EXPO_PUBLIC_API_URL before starting
- * Metro — necessary whenever the machine's IP changes, which it will.
+ * Set EXPO_PUBLIC_API_URL before starting Metro to point somewhere else — a
+ * staging server, a tunnel, a colleague's machine:
  *
- *   EXPO_PUBLIC_API_URL=http://192.168.1.50:8000 npx expo start
+ *   EXPO_PUBLIC_API_URL=https://carbcred-system.on-forge.com npx expo start
  */
-const LOCAL_API = process.env.EXPO_PUBLIC_API_URL ?? 'http://192.168.100.117:8000';
+function developmentApi(): string {
+  const override = process.env.EXPO_PUBLIC_API_URL;
+
+  if (override) {
+    return override;
+  }
+
+  // "192.168.100.27:8081" — the machine Metro is running on.
+  const host = Constants.expoConfig?.hostUri?.split(':')[0];
+
+  return `http://${host ?? 'localhost'}:${API_PORT}`;
+}
+
+/** Where `php artisan serve` listens. */
+const API_PORT = 8000;
+
 const TEST_SERVER_API = 'https://carbcred-system.on-forge.com';
 
-export const API_BASE_URL = __DEV__ ? LOCAL_API : TEST_SERVER_API;
+export const API_BASE_URL = __DEV__ ? developmentApi() : TEST_SERVER_API;
 
 /** Every endpoint lives under this prefix; breaking changes go to /api/v2. */
 export const API_PREFIX = '/api/v1';
