@@ -616,6 +616,26 @@ export function SiteDetailScreen({ route, navigation }: Props) {
         organisationSlug={slug}
         siteId={siteId}
         visible={reviewing !== null}
+        onRemovePhoto={(reading, photoId) =>
+          Alert.alert('Remove this photograph?', 'It goes from the record, and the removal is logged.', [
+            { text: 'Keep it', style: 'cancel' },
+            {
+              text: 'Remove',
+              style: 'destructive',
+              onPress: async () => {
+                try {
+                  await api.delete(
+                    `/organisations/${slug}/sites/${siteId}/readings/${reading.id}/photos/${photoId}`,
+                  );
+                  await queryClient.invalidateQueries({ queryKey: ['site', slug, siteId] });
+                  setReviewing(null);
+                } catch (error) {
+                  Alert.alert('Not removed', errorMessage(error, 'That photograph is still there.'));
+                }
+              },
+            },
+          ])
+        }
         onAddPhoto={async (reading) => {
           const photo = await choosePhoto();
 

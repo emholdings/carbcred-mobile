@@ -28,6 +28,7 @@ export function ReviewReading({
   onClose,
   onDecide,
   onAddPhoto,
+  onRemovePhoto,
 }: {
   reading: Reading | null;
   organisationSlug: string | null;
@@ -37,6 +38,7 @@ export function ReviewReading({
   onClose: () => void;
   onDecide: (decision: 'verify' | 'query', notes: string) => void;
   onAddPhoto: (reading: Reading) => void;
+  onRemovePhoto: (reading: Reading, photoId: number) => void;
 }) {
   const { scheme } = useTheme();
   const token = useAuthStore((state) => state.token);
@@ -104,21 +106,45 @@ export function ReviewReading({
 
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {reading.photos.map((photoId) => (
-                  <Image
-                    key={photoId}
-                    source={{
-                      uri: `${API_BASE_URL}${API_PREFIX}/organisations/${organisationSlug}/sites/${siteId}/readings/${reading.id}/photos/${photoId}`,
-                      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-                    }}
-                    style={{
-                      width: 96,
-                      height: 96,
-                      borderRadius: 10,
-                      backgroundColor: scheme.surface,
-                      borderWidth: 1,
-                      borderColor: scheme.border,
-                    }}
-                  />
+                  <View key={photoId} style={{ position: 'relative' }}>
+                    <Image
+                      source={{
+                        uri: `${API_BASE_URL}${API_PREFIX}/organisations/${organisationSlug}/sites/${siteId}/readings/${reading.id}/photos/${photoId}`,
+                        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+                      }}
+                      style={{
+                        width: 96,
+                        height: 96,
+                        borderRadius: 10,
+                        backgroundColor: scheme.surface,
+                        borderWidth: 1,
+                        borderColor: scheme.border,
+                      }}
+                    />
+
+                    {/* Only while nobody has judged the reading: after that the
+                        frame is part of somebody's decision. */}
+                    {reading.status === 'unverified' ? (
+                      <Tap
+                        onPress={() => onRemovePhoto(reading, photoId)}
+                        hitSlop={8}
+                        accessibilityLabel="Remove this photograph"
+                        style={{
+                          position: 'absolute',
+                          top: -6,
+                          right: -6,
+                          width: 24,
+                          height: 24,
+                          borderRadius: 12,
+                          backgroundColor: scheme.danger,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <X color="#ffffff" size={14} strokeWidth={3} />
+                      </Tap>
+                    ) : null}
+                  </View>
                 ))}
 
                 <Tap
