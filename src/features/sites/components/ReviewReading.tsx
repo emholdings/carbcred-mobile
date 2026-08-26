@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { ActivityIndicator, Modal, ScrollView, Text, TextInput, View } from 'react-native';
-import { ShieldAlert, ShieldCheck, X } from 'lucide-react-native';
+import { ActivityIndicator, Image, Modal, ScrollView, Text, TextInput, View } from 'react-native';
+import { Camera, ShieldAlert, ShieldCheck, X } from 'lucide-react-native';
+import { API_BASE_URL, API_PREFIX } from '@config/env';
+import { Tap } from '@shared/components/Tap';
+import { useAuthStore } from '@stores/authStore';
 import { brand } from '@theme/colors';
 import { useTheme } from '@theme/useTheme';
 import type { SiteOperations } from '../api';
-import { Tap } from '@shared/components/Tap';
 
 type Reading = SiteOperations['performance'][number];
 
@@ -19,18 +21,25 @@ type Reading = SiteOperations['performance'][number];
  */
 export function ReviewReading({
   reading,
+  organisationSlug,
+  siteId,
   visible,
   busy,
   onClose,
   onDecide,
+  onAddPhoto,
 }: {
   reading: Reading | null;
+  organisationSlug: string | null;
+  siteId: number;
   visible: boolean;
   busy: boolean;
   onClose: () => void;
   onDecide: (decision: 'verify' | 'query', notes: string) => void;
+  onAddPhoto: (reading: Reading) => void;
 }) {
   const { scheme } = useTheme();
+  const token = useAuthStore((state) => state.token);
   const [notes, setNotes] = useState('');
 
   if (!reading) {
@@ -83,6 +92,53 @@ export function ReviewReading({
                 }
                 tone={reading.has_photo || reading.located ? undefined : '#b06a00'}
               />
+            </View>
+
+            {/* The frame the number was read from. Looking at the counter is
+                the whole of the check; without it a reviewer is agreeing with a
+                typed figure. */}
+            <View style={{ gap: 8 }}>
+              <Text style={{ color: scheme.textMuted, fontSize: 13, fontWeight: '600' }}>
+                {reading.photos.length ? 'The frame it was read from' : 'No photograph behind this one'}
+              </Text>
+
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {reading.photos.map((photoId) => (
+                  <Image
+                    key={photoId}
+                    source={{
+                      uri: `${API_BASE_URL}${API_PREFIX}/organisations/${organisationSlug}/sites/${siteId}/readings/${reading.id}/photos/${photoId}`,
+                      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+                    }}
+                    style={{
+                      width: 96,
+                      height: 96,
+                      borderRadius: 10,
+                      backgroundColor: scheme.surface,
+                      borderWidth: 1,
+                      borderColor: scheme.border,
+                    }}
+                  />
+                ))}
+
+                <Tap
+                  onPress={() => onAddPhoto(reading)}
+                  style={{
+                    width: 96,
+                    height: 96,
+                    borderRadius: 10,
+                    borderWidth: 1,
+                    borderColor: scheme.border,
+                    backgroundColor: scheme.surface,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 4,
+                  }}
+                >
+                  <Camera color={scheme.textMuted} size={22} />
+                  <Text style={{ color: scheme.textMuted, fontSize: 11 }}>Add photo</Text>
+                </Tap>
+              </View>
             </View>
 
             <View style={{ gap: 6 }}>

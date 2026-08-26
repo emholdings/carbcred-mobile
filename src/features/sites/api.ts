@@ -59,6 +59,8 @@ export type SiteOperations = {
     reviewed_at: string | null;
     review_notes: string | null;
     has_photo: boolean;
+    /** Frame ids, fetched through the authenticated photo route. */
+    photos: number[];
     located: boolean;
   }[];
   unverified_readings: number;

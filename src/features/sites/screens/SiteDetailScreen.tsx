@@ -14,6 +14,9 @@ import { useAuthStore } from '@stores/authStore';
 import { brand } from '@theme/colors';
 import { useTheme } from '@theme/useTheme';
 import { fetchSite, MOBILIZATION_STEPS, type SiteOperations } from '../api';
+import { clientRef } from '@features/capture/clientRef';
+import { pickPhoto } from '@features/capture/photos';
+import { useQueueStore } from '@features/capture/queue';
 import { ReviewReading } from '../components/ReviewReading';
 
 type Props = NativeStackScreenProps<RiversStackParamList, 'SiteDetail'>;
@@ -54,6 +57,7 @@ export function SiteDetailScreen({ route, navigation }: Props) {
   const [deciding, setDeciding] = useState(false);
   const canVerify = can('verify-readings');
   const queryClient = useQueryClient();
+  const enqueue = useQueueStore((state) => state.enqueue);
 
   return (
     <BrandScreen
@@ -609,7 +613,29 @@ export function SiteDetailScreen({ route, navigation }: Props) {
       {/* Standing behind a number, or questioning it, without going to a desk. */}
       <ReviewReading
         reading={reviewing}
+        organisationSlug={slug}
+        siteId={siteId}
         visible={reviewing !== null}
+        onAddPhoto={async (reading) => {
+          const photo = await pickPhoto('camera');
+
+          if (!photo) {
+            return;
+          }
+
+          // Through the queue like every other frame, so a photograph added
+          // standing at the plant survives having no signal there.
+          await enqueue({
+            kind: 'photo',
+            endpoint: `/organisations/${slug}/sites/${siteId}/readings/${reading.id}/photos`,
+            file: photo,
+            label: 'Reading photo',
+            context: name,
+            payload: { client_ref: clientRef() },
+          });
+
+          Alert.alert('Added', 'The photograph files itself when you have signal.');
+        }}
         busy={deciding}
         onClose={() => setReviewing(null)}
         onDecide={async (decision, notes) => {
