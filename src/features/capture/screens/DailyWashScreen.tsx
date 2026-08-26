@@ -110,7 +110,7 @@ export function DailyWashScreen() {
     setRecovered('');
     setNotes('');
 
-    Alert.alert('Reading is in', 'Saved on the phone. It files itself when you have signal.');
+    Alert.alert('Reading is in', 'Saved on this phone. It uploads by itself as soon as there is signal.');
   };
 
   return (

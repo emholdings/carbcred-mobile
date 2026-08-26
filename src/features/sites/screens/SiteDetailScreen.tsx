@@ -634,7 +634,7 @@ export function SiteDetailScreen({ route, navigation }: Props) {
             payload: { client_ref: clientRef() },
           });
 
-          Alert.alert('Added', 'The photograph files itself when you have signal.');
+          Alert.alert('Photograph added', 'Saved on this phone. It uploads by itself as soon as there is signal.');
         }}
         busy={deciding}
         onClose={() => setReviewing(null)}

@@ -63,7 +63,7 @@ export function QueueStatus() {
           {failed.length > 0
             ? failed[0].lastError
             : !online
-              ? 'They will file themselves when you have signal.'
+              ? 'They upload by themselves as soon as there is signal.'
               : 'Nothing is lost — these are saved on the phone.'}
         </Text>
       </View>

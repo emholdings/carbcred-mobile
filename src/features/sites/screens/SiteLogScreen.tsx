@@ -307,7 +307,7 @@ export function SiteLogScreen({ route, navigation }: Props) {
       return;
     }
 
-    Alert.alert('Logged', 'Saved on the phone. It files itself when you have signal.');
+    Alert.alert('Logged', 'Saved on this phone. It uploads by itself as soon as there is signal.');
     navigation.goBack();
   };
 
