@@ -11,7 +11,7 @@ import { useTheme } from '@theme/useTheme';
 import { fetchSites } from '../api';
 import { clientRef } from '../clientRef';
 import { EvidenceFields } from '../components/EvidenceFields';
-import { pickPhoto } from '../photos';
+import { choosePhoto } from '../photos';
 import type { QueuedFile } from '../types';
 import { useCoordinates } from '../useCoordinates';
 import { QueueStatus } from '../components/QueueStatus';
@@ -40,7 +40,7 @@ export function DailyWashScreen() {
   const [photos, setPhotos] = useState<QueuedFile[]>([]);
 
   const addPhoto = async () => {
-    const photo = await pickPhoto('camera');
+    const photo = await choosePhoto();
 
     if (photo) {
       setPhotos((current) => [...current, photo]);

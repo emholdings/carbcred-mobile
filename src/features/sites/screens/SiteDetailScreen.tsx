@@ -15,7 +15,7 @@ import { brand } from '@theme/colors';
 import { useTheme } from '@theme/useTheme';
 import { fetchSite, MOBILIZATION_STEPS, type SiteOperations } from '../api';
 import { clientRef } from '@features/capture/clientRef';
-import { pickPhoto } from '@features/capture/photos';
+import { choosePhoto } from '@features/capture/photos';
 import { useQueueStore } from '@features/capture/queue';
 import { ReviewReading } from '../components/ReviewReading';
 
@@ -617,7 +617,7 @@ export function SiteDetailScreen({ route, navigation }: Props) {
         siteId={siteId}
         visible={reviewing !== null}
         onAddPhoto={async (reading) => {
-          const photo = await pickPhoto('camera');
+          const photo = await choosePhoto();
 
           if (!photo) {
             return;

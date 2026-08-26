@@ -11,7 +11,7 @@ import { DateField, today as todayKey } from '@shared/components/DateField';
 import { TextField } from '@shared/components/TextField';
 import { clientRef } from '@features/capture/clientRef';
 import { EvidenceFields } from '@features/capture/components/EvidenceFields';
-import { pickPhoto } from '@features/capture/photos';
+import { choosePhoto } from '@features/capture/photos';
 import type { QueuedFile } from '@features/capture/types';
 import { useCoordinates } from '@features/capture/useCoordinates';
 import { useQueueStore } from '@features/capture/queue';
@@ -87,7 +87,7 @@ export function SiteLogScreen({ route, navigation }: Props) {
   const [added, setAdded] = useState<{ name: string; role: string }[]>([]);
 
   const addPhoto = async () => {
-    const photo = await pickPhoto('camera');
+    const photo = await choosePhoto();
 
     if (photo) {
       setPhotos((current) => [...current, photo]);

@@ -1,3 +1,4 @@
+import { Alert } from 'react-native';
 import { Directory, File, Paths } from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import { clientRef } from './clientRef';
@@ -56,6 +57,34 @@ export async function pickPhoto(source: 'camera' | 'library'): Promise<QueuedFil
     name,
     type: asset.mimeType ?? 'image/jpeg',
   };
+}
+
+/**
+ * Ask which way, then take or choose one.
+ *
+ * Both are real: the plant counter is photographed standing in front of it,
+ * and the permit that arrived by WhatsApp last week is already in the gallery.
+ * A control that only opens the camera makes the second case impossible, and
+ * one that only opens the gallery makes the first case a two-step chore.
+ */
+export function choosePhoto(): Promise<QueuedFile | null> {
+  return new Promise((resolve) => {
+    Alert.alert('Add a photograph', undefined, [
+      {
+        text: 'Take one now',
+        onPress: () => {
+          void pickPhoto('camera').then(resolve);
+        },
+      },
+      {
+        text: 'Choose from the phone',
+        onPress: () => {
+          void pickPhoto('library').then(resolve);
+        },
+      },
+      { text: 'Cancel', style: 'cancel', onPress: () => resolve(null) },
+    ]);
+  });
 }
 
 /** Remove a queued photo's copy once it has filed, or been abandoned. */
