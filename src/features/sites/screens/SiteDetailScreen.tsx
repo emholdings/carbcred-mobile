@@ -13,6 +13,7 @@ import { useAuthStore } from '@stores/authStore';
 import { brand } from '@theme/colors';
 import { useTheme } from '@theme/useTheme';
 import { fetchSite, MOBILIZATION_STEPS, type SiteOperations } from '../api';
+import { ReviewReading } from '../components/ReviewReading';
 
 type Props = NativeStackScreenProps<RiversStackParamList, 'SiteDetail'>;
 
@@ -48,6 +49,9 @@ export function SiteDetailScreen({ route, navigation }: Props) {
   const sorted = useSortedOperations(ops);
   const [chosenBar, setChosenBar] = useState<number | null>(null);
   const [naming, setNaming] = useState(false);
+  const [reviewing, setReviewing] = useState<SiteOperations['performance'][number] | null>(null);
+  const [deciding, setDeciding] = useState(false);
+  const canVerify = can('verify-readings');
   const queryClient = useQueryClient();
 
   return (
@@ -207,7 +211,11 @@ export function SiteDetailScreen({ route, navigation }: Props) {
             <Section
               title="Readings"
               count={ops.performance.length}
-              hint={ops.unverified_readings > 0 ? `${ops.unverified_readings} unverified` : undefined}
+              hint={
+                ops.unverified_readings > 0
+                  ? `${ops.unverified_readings} unverified${canVerify ? ' · tap to decide' : ''}`
+                  : undefined
+              }
               onAdd={canLog ? () => log('wash-reading') : undefined}
               addLabel="Record a wash reading"
             >
@@ -219,10 +227,12 @@ export function SiteDetailScreen({ route, navigation }: Props) {
                   contentContainerStyle={{ gap: 0 }}
                 >
                   {[...ops.performance].reverse().map((reading, index) => (
-                  <View
-                    key={reading.id}
-                    style={{
-                      gap: 5,
+                    <Pressable
+                      key={reading.id}
+                      onPress={() => (canVerify ? setReviewing(reading) : undefined)}
+                      disabled={!canVerify}
+                      style={{
+                        gap: 5,
                       paddingTop: index === 0 ? 0 : 11,
                       borderTopWidth: index === 0 ? 0 : 1,
                       borderTopColor: scheme.border,
@@ -256,7 +266,7 @@ export function SiteDetailScreen({ route, navigation }: Props) {
                       <View style={{ flex: 1 }} />
                       <Standing status={reading.status} />
                       </View>
-                    </View>
+                    </Pressable>
                   ))}
                 </ScrollView>
               ) : (
@@ -595,6 +605,34 @@ export function SiteDetailScreen({ route, navigation }: Props) {
       {/* Naming a representative goes straight to the server rather than through
           the offline queue: the pool it picks from was fetched online anyway, so
           there is nothing useful to queue against. */}
+      {/* Standing behind a number, or questioning it, without going to a desk. */}
+      <ReviewReading
+        reading={reviewing}
+        visible={reviewing !== null}
+        busy={deciding}
+        onClose={() => setReviewing(null)}
+        onDecide={async (decision, notes) => {
+          if (!reviewing) {
+            return;
+          }
+
+          setDeciding(true);
+
+          try {
+            await api.post(
+              `/organisations/${slug}/sites/${siteId}/readings/${reviewing.id}/review`,
+              { decision, ...(notes ? { notes } : {}) },
+            );
+            await queryClient.invalidateQueries({ queryKey: ['site', slug, siteId] });
+            setReviewing(null);
+          } catch (error) {
+            Alert.alert('Not decided', errorMessage(error, 'That decision did not go through.'));
+          } finally {
+            setDeciding(false);
+          }
+        }}
+      />
+
       {ops ? (
         <NameRepresentative
           visible={naming}

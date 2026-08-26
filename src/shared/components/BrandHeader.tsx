@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Bell, ChevronLeft } from 'lucide-react-native';
-import { useInboxCount } from '@shared/hooks/useInboxCount';
+import { useUnreadCount } from '@shared/hooks/useUnreadCount';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { brand } from '@theme/colors';
 import { useTheme } from '@theme/useTheme';
@@ -32,7 +32,7 @@ export function BrandHeader({
   const { isDark } = useTheme();
   const navigation = useNavigation();
   const canGoBack = navigation.canGoBack();
-  const waiting = useInboxCount();
+  const waiting = useUnreadCount();
 
   return (
     <View
@@ -78,10 +78,14 @@ export function BrandHeader({
           {/* The bell counts the same inbox the Tasks tab shows, so the two
               can never disagree about how much is waiting. */}
           <Pressable
-            onPress={() => navigation.getParent()?.navigate('Tasks' as never)}
+            onPress={() =>
+              (navigation.getParent() as unknown as {
+                navigate: (name: string, params?: object) => void;
+              } | undefined)?.navigate('More', { screen: 'Notifications' })
+            }
             accessibilityRole="button"
             accessibilityLabel={
-              waiting > 0 ? `${waiting} waiting for you` : 'Nothing waiting for you'
+              waiting > 0 ? `${waiting} unread` : 'Nothing unread'
             }
             hitSlop={10}
           >

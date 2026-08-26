@@ -5,6 +5,7 @@ import { fetchCompliance } from '@features/more/compliance';
 import { fetchEmergencyContacts } from '@features/more/api';
 import { fetchRivers } from '@features/rivers/api';
 import { fetchSite, fetchSites } from '@features/sites/api';
+import { fetchNotifications } from '@features/notifications/api';
 import { fetchInbox } from '@features/tasks/api';
 import { fetchVocabulary } from '@features/tickets/api';
 import { useAuthStore } from '@stores/authStore';
@@ -51,6 +52,7 @@ export function useWarmCache(): void {
         prefetch(['dashboard'], fetchDashboard),
         prefetch(['rivers'], fetchRivers),
         prefetch(['approvals', null], () => fetchInbox()),
+        prefetch(['notifications'], fetchNotifications),
         prefetch(['ticket-vocabulary'], fetchVocabulary),
         prefetch(['emergency-contacts', slug], () => fetchEmergencyContacts(slug)),
         prefetch(['compliance', slug], () => fetchCompliance(slug)),
