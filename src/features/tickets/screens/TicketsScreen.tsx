@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronRight, Plus } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { Tap } from '@shared/components/Tap';
 import { QueryState } from '@shared/components/QueryState';
 import type { MoreStackParamList } from '@navigation/types';
 import { useAuthStore } from '@stores/authStore';
@@ -45,7 +46,7 @@ export function TicketsScreen({ navigation }: Props) {
         contentContainerStyle={{ gap: 12, paddingVertical: 18 }}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={scheme.textMuted} />}
       >
-        <Pressable
+        <Tap
           onPress={() => navigation.navigate('LogTicket')}
           style={{
             flexDirection: 'row',
@@ -58,7 +59,7 @@ export function TicketsScreen({ navigation }: Props) {
         >
           <Plus color={brand.cream} size={20} />
           <Text style={{ color: brand.cream, fontSize: 16, fontWeight: '700' }}>Log something</Text>
-        </Pressable>
+        </Tap>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
           <Chip label="Mine" on={filters.assigned === 'me'} onPress={() => toggle({ assigned: 'me' })} />
@@ -83,7 +84,7 @@ export function TicketsScreen({ navigation }: Props) {
           {(list) => (
             <>
               {list.map((ticket: Ticket) => (
-                <Pressable
+                <Tap
                   key={ticket.id}
                   onPress={() => navigation.navigate('TicketDetail', { ticketId: ticket.id, reference: ticket.reference })}
                   style={{
@@ -109,7 +110,7 @@ export function TicketsScreen({ navigation }: Props) {
                     </Text>
                   </View>
                   <ChevronRight color={scheme.textMuted} size={20} />
-                </Pressable>
+                </Tap>
               ))}
             </>
           )}
@@ -123,7 +124,7 @@ function Chip({ label: text, on, onPress }: { label: string; on: boolean; onPres
   const { scheme } = useTheme();
 
   return (
-    <Pressable
+    <Tap
       onPress={onPress}
       style={{
         backgroundColor: on ? brand.deepLeaf : scheme.surface,
@@ -135,6 +136,6 @@ function Chip({ label: text, on, onPress }: { label: string; on: boolean; onPres
       }}
     >
       <Text style={{ color: on ? brand.cream : scheme.text, fontSize: 13, fontWeight: '600' }}>{text}</Text>
-    </Pressable>
+    </Tap>
   );
 }

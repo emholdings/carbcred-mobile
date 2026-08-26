@@ -1,7 +1,8 @@
-import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
+import { Linking, ScrollView, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Phone } from 'lucide-react-native';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { Tap } from '@shared/components/Tap';
 import { QueryState } from '@shared/components/QueryState';
 import { useAuthStore } from '@stores/authStore';
 import { useTheme } from '@theme/useTheme';
@@ -38,7 +39,7 @@ export function EmergencyScreen() {
           {(list) => (
             <>
               {list.map((contact: EmergencyContact) => (
-                <Pressable
+                <Tap
                   key={contact.id}
                   onPress={() => contact.phone && Linking.openURL(`tel:${contact.phone.replace(/\s/g, '')}`)}
                   disabled={!contact.phone}
@@ -65,7 +66,7 @@ export function EmergencyScreen() {
                     ) : null}
                   </View>
                   {contact.phone ? <Phone color={scheme.accent} size={22} /> : null}
-                </Pressable>
+                </Tap>
               ))}
             </>
           )}

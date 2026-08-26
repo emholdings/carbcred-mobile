@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, ScrollView, Text, View } from 'react-native';
 import * as Location from 'expo-location';
 import { useQuery } from '@tanstack/react-query';
 import { Camera, ImagePlus, MapPin, X } from 'lucide-react-native';
 import { Button } from '@shared/components/Button';
+import { Tap } from '@shared/components/Tap';
 import { BrandScreen } from '@shared/components/BrandScreen';
 import { TextField } from '@shared/components/TextField';
 import { useAuthStore } from '@stores/authStore';
@@ -190,7 +191,7 @@ export function CaptureScreen() {
         ) : null}
 
         <Field label="Where">
-          <Pressable
+          <Tap
             onPress={takeLocation}
             style={{
               flexDirection: 'row',
@@ -211,7 +212,7 @@ export function CaptureScreen() {
                   ? `${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)}`
                   : 'Tap to record coordinates'}
             </Text>
-          </Pressable>
+          </Tap>
         </Field>
 
         <Field label="Photographs">
@@ -222,7 +223,7 @@ export function CaptureScreen() {
                   source={{ uri: photo.uri }}
                   style={{ width: 72, height: 72, borderRadius: 10 }}
                 />
-                <Pressable
+                <Tap
                   onPress={() => setPhotos((current) => current.filter((item) => item.uri !== photo.uri))}
                   hitSlop={8}
                   style={{
@@ -238,11 +239,11 @@ export function CaptureScreen() {
                   }}
                 >
                   <X color="#ffffff" size={13} strokeWidth={3} />
-                </Pressable>
+                </Tap>
               </View>
             ))}
 
-            <Pressable
+            <Tap
               onPress={() => addPhoto('camera')}
               style={{
                 width: 72,
@@ -256,8 +257,8 @@ export function CaptureScreen() {
               }}
             >
               <Camera color={scheme.textMuted} size={22} />
-            </Pressable>
-            <Pressable
+            </Tap>
+            <Tap
               onPress={() => addPhoto('library')}
               style={{
                 width: 72,
@@ -271,7 +272,7 @@ export function CaptureScreen() {
               }}
             >
               <ImagePlus color={scheme.textMuted} size={22} />
-            </Pressable>
+            </Tap>
           </View>
         </Field>
 
@@ -316,7 +317,7 @@ function Choice({
   const { scheme } = useTheme();
 
   return (
-    <Pressable
+    <Tap
       onPress={onPress}
       accessibilityRole="radio"
       accessibilityState={{ selected }}
@@ -333,6 +334,6 @@ function Choice({
       <Text style={{ color: selected ? scheme.onPrimary : scheme.text, fontSize: 15, fontWeight: selected ? '600' : '400' }}>
         {label}
       </Text>
-    </Pressable>
+    </Tap>
   );
 }

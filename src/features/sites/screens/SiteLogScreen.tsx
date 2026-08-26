@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, ScrollView, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { Tap } from '@shared/components/Tap';
 import { Button } from '@shared/components/Button';
 import { ChoiceField } from '@shared/components/ChoiceField';
 import { PickerField } from '@shared/components/PickerField';
@@ -516,11 +517,11 @@ export function SiteLogScreen({ route, navigation }: Props) {
         <Button label={kind === 'attendance' ? 'Add to register' : 'Log it'} onPress={file} disabled={!ready} />
 
         {kind === 'attendance' && added.length ? (
-          <Pressable onPress={() => navigation.goBack()} style={{ alignItems: 'center', paddingVertical: 6 }}>
+          <Tap onPress={() => navigation.goBack()} style={{ alignItems: 'center', paddingVertical: 6 }}>
             <Text style={{ color: brand.deepLeaf, fontSize: 15, fontWeight: '700' }}>
               {`Done · ${added.length} added`}
             </Text>
-          </Pressable>
+          </Tap>
         ) : null}
       </ScrollView>
     </BrandScreen>

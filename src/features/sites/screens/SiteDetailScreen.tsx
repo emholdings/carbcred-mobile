@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
-import { Alert, FlatList, Linking, Modal, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { Alert, FlatList, Linking, Modal, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Camera, Check, Circle, MapPin, Plus, ShieldAlert, ShieldCheck, ShieldQuestion, X } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { api, errorMessage } from '@api/client';
 import { BarChart } from '@shared/components/BarChart';
+import { Tap } from '@shared/components/Tap';
 import { BrandScreen } from '@shared/components/BrandScreen';
 import { LoadState } from '@shared/components/QueryState';
 import { usePermissions } from '@shared/hooks/usePermissions';
@@ -227,7 +228,7 @@ export function SiteDetailScreen({ route, navigation }: Props) {
                   contentContainerStyle={{ gap: 0 }}
                 >
                   {[...ops.performance].reverse().map((reading, index) => (
-                    <Pressable
+                    <Tap
                       key={reading.id}
                       onPress={() => (canVerify ? setReviewing(reading) : undefined)}
                       disabled={!canVerify}
@@ -266,7 +267,7 @@ export function SiteDetailScreen({ route, navigation }: Props) {
                       <View style={{ flex: 1 }} />
                       <Standing status={reading.status} />
                       </View>
-                    </Pressable>
+                    </Tap>
                   ))}
                 </ScrollView>
               ) : (
@@ -431,7 +432,7 @@ export function SiteDetailScreen({ route, navigation }: Props) {
             </Section>
 
             {data.verify_url && canLog ? (
-              <Pressable
+              <Tap
                 onPress={() => Linking.openURL(data.verify_url)}
                 style={{
                   backgroundColor: scheme.surface,
@@ -448,7 +449,7 @@ export function SiteDetailScreen({ route, navigation }: Props) {
                 <Text style={{ color: scheme.textMuted, fontSize: 12 }}>
                   What anyone scanning this site's board sees — permits and inspection record, nothing else.
                 </Text>
-              </Pressable>
+              </Tap>
             ) : null}
 
             <Section
@@ -747,16 +748,16 @@ function NameRepresentative({
             <Text style={{ color: scheme.text, fontSize: 17, fontWeight: '700', flex: 1 }}>
               Who speaks for this site
             </Text>
-            <Pressable onPress={onClose} hitSlop={10} accessibilityLabel="Close">
+            <Tap onPress={onClose} hitSlop={10} accessibilityLabel="Close">
               <X color={scheme.textMuted} size={22} />
-            </Pressable>
+            </Tap>
           </View>
 
           <FlatList
             data={people}
             keyExtractor={(person) => String(person.id)}
             renderItem={({ item }) => (
-              <Pressable
+              <Tap
                 onPress={() => onPick(item.id)}
                 style={{
                   paddingHorizontal: 18,
@@ -766,7 +767,7 @@ function NameRepresentative({
                 }}
               >
                 <Text style={{ color: scheme.text, fontSize: 15 }}>{item.label}</Text>
-              </Pressable>
+              </Tap>
             )}
           />
         </View>
@@ -859,7 +860,7 @@ function Section({
         <View style={{ flex: 1 }} />
         {hint ? <Text style={{ color: scheme.textMuted, fontSize: 12 }}>{hint}</Text> : null}
         {onAdd ? (
-          <Pressable
+          <Tap
             onPress={onAdd}
             accessibilityRole="button"
             accessibilityLabel={addLabel ?? `Add to ${title}`}
@@ -874,7 +875,7 @@ function Section({
             }}
           >
             <Plus color={brand.cream} size={18} strokeWidth={3} />
-          </Pressable>
+          </Tap>
         ) : null}
       </View>
       {children}

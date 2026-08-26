@@ -1,6 +1,7 @@
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { brand } from '@theme/colors';
 import { useTheme } from '@theme/useTheme';
+import { Tap } from '@shared/components/Tap';
 
 export type Choice = { value: string; label: string };
 
@@ -35,7 +36,7 @@ export function ChoiceField({
           const chosen = choice.value === value;
 
           return (
-            <Pressable
+            <Tap
               key={choice.value}
               onPress={() => onChange(choice.value)}
               accessibilityRole="button"
@@ -58,7 +59,7 @@ export function ChoiceField({
               >
                 {choice.label}
               </Text>
-            </Pressable>
+            </Tap>
           );
         })}
       </View>

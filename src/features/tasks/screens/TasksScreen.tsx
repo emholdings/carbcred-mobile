@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Alert, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { Alert, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { errorMessage } from '@api/client';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { Tap } from '@shared/components/Tap';
 import { QueryState } from '@shared/components/QueryState';
 import { useTheme } from '@theme/useTheme';
 import { decide, fetchInbox, TYPE_LABELS, type ApprovalItem, type ApprovalType } from '../api';
@@ -147,7 +148,7 @@ function Chip({
   const { scheme } = useTheme();
 
   return (
-    <Pressable
+    <Tap
       onPress={onPress}
       style={{
         backgroundColor: selected ? scheme.accent : scheme.surface,
@@ -161,7 +162,7 @@ function Chip({
       <Text style={{ color: selected ? scheme.onPrimary : scheme.text, fontSize: 14, fontWeight: '600' }}>
         {label} {count > 0 ? `(${count})` : ''}
       </Text>
-    </Pressable>
+    </Tap>
   );
 }
 
@@ -181,7 +182,7 @@ function Action({
   const { scheme } = useTheme();
 
   return (
-    <Pressable
+    <Tap
       onPress={onPress}
       disabled={disabled}
       style={{
@@ -196,6 +197,6 @@ function Action({
       }}
     >
       <Text style={{ color: outline ? tone : scheme.onPrimary, fontSize: 15, fontWeight: '600' }}>{label}</Text>
-    </Pressable>
+    </Tap>
   );
 }

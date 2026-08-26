@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, Text, TextInput, View } from 'react-native';
 import { ShieldAlert, ShieldCheck, X } from 'lucide-react-native';
 import { brand } from '@theme/colors';
 import { useTheme } from '@theme/useTheme';
 import type { SiteOperations } from '../api';
+import { Tap } from '@shared/components/Tap';
 
 type Reading = SiteOperations['performance'][number];
 
@@ -60,9 +61,9 @@ export function ReviewReading({
             <Text style={{ color: scheme.text, fontSize: 18, fontWeight: '700', flex: 1 }}>
               {`${reading.actual.toLocaleString()} t on ${reading.date}`}
             </Text>
-            <Pressable onPress={close} hitSlop={10} accessibilityLabel="Close">
+            <Tap onPress={close} hitSlop={10} accessibilityLabel="Close">
               <X color={scheme.textMuted} size={22} />
-            </Pressable>
+            </Tap>
           </View>
 
           <ScrollView contentContainerStyle={{ gap: 14 }} keyboardShouldPersistTaps="handled">
@@ -177,7 +178,7 @@ function Decision({
   onPress: () => void;
 }) {
   return (
-    <Pressable
+    <Tap
       onPress={onPress}
       disabled={busy}
       style={{
@@ -196,6 +197,6 @@ function Decision({
     >
       {busy ? <ActivityIndicator color={colour} /> : icon}
       <Text style={{ color: colour, fontSize: 16, fontWeight: '700' }}>{label}</Text>
-    </Pressable>
+    </Tap>
   );
 }

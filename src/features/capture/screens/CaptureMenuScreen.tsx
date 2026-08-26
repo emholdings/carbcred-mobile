@@ -1,7 +1,8 @@
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { ChevronRight, Droplets, Sprout } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { Tap } from '@shared/components/Tap';
 import type { CaptureStackParamList } from '@navigation/types';
 import { brand } from '@theme/colors';
 import { useTheme } from '@theme/useTheme';
@@ -65,11 +66,11 @@ export function CaptureMenuScreen({ navigation }: Props) {
                       : 'Waiting for signal'}
                 </Text>
                 {item.status === 'failed' ? (
-                  <Pressable onPress={() => retry(item.payload.client_ref)}>
+                  <Tap onPress={() => retry(item.payload.client_ref)}>
                     <Text style={{ color: brand.deepLeaf, fontSize: 13, fontWeight: '700', marginTop: 2 }}>
                       Try again
                     </Text>
-                  </Pressable>
+                  </Tap>
                 ) : null}
               </View>
             ))}
@@ -94,7 +95,7 @@ function Option({
   const { scheme } = useTheme();
 
   return (
-    <Pressable
+    <Tap
       onPress={onPress}
       style={{
         flexDirection: 'row',
@@ -113,6 +114,6 @@ function Option({
         <Text style={{ color: scheme.textMuted, fontSize: 13 }}>{hint}</Text>
       </View>
       <ChevronRight color={scheme.textMuted} size={20} />
-    </Pressable>
+    </Tap>
   );
 }

@@ -1,8 +1,9 @@
-import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Check, ChevronRight, Circle, CircleDot, MessageSquare } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { LoadState } from '@shared/components/QueryState';
+import { Tap } from '@shared/components/Tap';
 import { Screen } from '@shared/components/Screen';
 import type { MoreStackParamList } from '@navigation/types';
 import { useAuthStore } from '@stores/authStore';
@@ -50,7 +51,7 @@ export function ProjectDetailScreen({ route, navigation }: Props) {
 
         <LoadState query={query} rows={5} />
 
-        <Pressable
+        <Tap
           onPress={() => navigation.navigate('Discussion', { projectSlug: slug, name })}
           style={{
             flexDirection: 'row',
@@ -66,7 +67,7 @@ export function ProjectDetailScreen({ route, navigation }: Props) {
           <MessageSquare color={brand.deepLeaf} size={20} />
           <Text style={{ color: scheme.text, fontSize: 15, fontWeight: '600', flex: 1 }}>Discussion</Text>
           <ChevronRight color={scheme.textMuted} size={18} />
-        </Pressable>
+        </Tap>
 
         {data?.workflow ? (
           <>

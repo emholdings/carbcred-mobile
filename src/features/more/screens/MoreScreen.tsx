@@ -1,8 +1,9 @@
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, ScrollView, Text, View } from 'react-native';
 import { BadgeCheck, Bell, Building2, CalendarClock, ChevronRight, FolderKanban, HardHat, LogOut, Phone, ShieldCheck, Smartphone, Ticket } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { logout } from '@features/auth/api';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { Tap } from '@shared/components/Tap';
 import type { MoreStackParamList } from '@navigation/types';
 import { usePermissions } from '@shared/hooks/usePermissions';
 import { useAuthStore } from '@stores/authStore';
@@ -136,7 +137,7 @@ export function MoreScreen({ navigation }: Props) {
           onPress={() => navigation.navigate('Devices')}
         />
 
-        <Pressable
+        <Tap
           onPress={confirmSignOut}
           style={{
             flexDirection: 'row',
@@ -152,7 +153,7 @@ export function MoreScreen({ navigation }: Props) {
         >
           <LogOut color={scheme.danger} size={20} />
           <Text style={{ color: scheme.danger, fontSize: 16, fontWeight: '600' }}>Sign out</Text>
-        </Pressable>
+        </Tap>
       </ScrollView>
     </BrandScreen>
   );
@@ -172,7 +173,7 @@ function Row({
   const { scheme } = useTheme();
 
   return (
-    <Pressable
+    <Tap
       onPress={onPress}
       style={{
         flexDirection: 'row',
@@ -191,6 +192,6 @@ function Row({
         <Text style={{ color: scheme.textMuted, fontSize: 13 }}>{hint}</Text>
       </View>
       <ChevronRight color={scheme.textMuted} size={20} />
-    </Pressable>
+    </Tap>
   );
 }

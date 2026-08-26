@@ -1,11 +1,12 @@
 import type { ReactNode } from 'react';
-import { Image, Pressable, Text, View } from 'react-native';
+import { Image, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Bell, ChevronLeft } from 'lucide-react-native';
 import { useUnreadCount } from '@shared/hooks/useUnreadCount';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { brand } from '@theme/colors';
 import { useTheme } from '@theme/useTheme';
+import { Tap } from '@shared/components/Tap';
 
 /**
  * The green band every screen opens on.
@@ -49,7 +50,7 @@ export function BrandHeader({
     >
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
         {canGoBack ? (
-          <Pressable
+          <Tap
             onPress={() => navigation.goBack()}
             accessibilityRole="button"
             accessibilityLabel="Back"
@@ -66,7 +67,7 @@ export function BrandHeader({
             }}
           >
             <ChevronLeft color={brand.cream} size={24} />
-          </Pressable>
+          </Tap>
         ) : null}
         <View style={{ flex: 1, gap: 3 }}>
           <Text style={{ color: brand.cream, fontSize: 26, fontWeight: '700' }}>{title}</Text>
@@ -77,7 +78,7 @@ export function BrandHeader({
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 2 }}>
           {/* The bell counts the same inbox the Tasks tab shows, so the two
               can never disagree about how much is waiting. */}
-          <Pressable
+          <Tap
             onPress={() =>
               (navigation.getParent() as unknown as {
                 navigate: (name: string, params?: object) => void;
@@ -110,7 +111,7 @@ export function BrandHeader({
                 </Text>
               </View>
             ) : null}
-          </Pressable>
+          </Tap>
 
           <Image
             source={require('@assets/mark.png')}

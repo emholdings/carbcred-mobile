@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Alert, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { Alert, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { errorMessage } from '@api/client';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { Tap } from '@shared/components/Tap';
 import { LoadState } from '@shared/components/QueryState';
 import { TextField } from '@shared/components/TextField';
 import { Button } from '@shared/components/Button';
@@ -132,7 +133,7 @@ export function TicketDetailScreen({ route }: Props) {
                 <Text style={{ color: scheme.textMuted, fontSize: 13, fontWeight: '600' }}>Move it to</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                   {data.available_transitions.map((status) => (
-                    <Pressable
+                    <Tap
                       key={status}
                       onPress={() => move.mutate(status)}
                       disabled={busy}
@@ -147,7 +148,7 @@ export function TicketDetailScreen({ route }: Props) {
                       }}
                     >
                       <Text style={{ color: brand.deepLeaf, fontSize: 14, fontWeight: '600' }}>{label(status)}</Text>
-                    </Pressable>
+                    </Tap>
                   ))}
                 </View>
               </View>

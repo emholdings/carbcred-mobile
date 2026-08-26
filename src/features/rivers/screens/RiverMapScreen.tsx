@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { useQuery } from '@tanstack/react-query';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { Tap } from '@shared/components/Tap';
 import { LoadState } from '@shared/components/QueryState';
 import { fetchSites, type SiteRow } from '@features/sites/api';
 import type { RiversStackParamList } from '@navigation/types';
@@ -100,7 +101,7 @@ export function RiverMapScreen({ navigation }: Props) {
         )}
 
         {selected ? (
-          <Pressable
+          <Tap
             onPress={() => navigation.navigate('SiteDetail', { siteId: selected.id, name: selected.name })}
             style={{
               backgroundColor: scheme.surface,
@@ -118,7 +119,7 @@ export function RiverMapScreen({ navigation }: Props) {
             <Text style={{ color: selected.operator ? brand.deepLeaf : '#b06a00', fontSize: 13, fontWeight: '600' }}>
               {selected.operator ? `Allocated to ${selected.operator}` : 'Not yet allocated'}
             </Text>
-          </Pressable>
+          </Tap>
         ) : (
           <Text style={{ color: scheme.textMuted, fontSize: 13 }}>
             Tap a site to see who is allocated to it.

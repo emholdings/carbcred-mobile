@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronRight } from 'lucide-react-native';
 import { fetchInbox, type ApprovalItem } from '@features/tasks/api';
 import { BarChart } from '@shared/components/BarChart';
+import { Tap } from '@shared/components/Tap';
 import { BrandScreen } from '@shared/components/BrandScreen';
 import { QueryState } from '@shared/components/QueryState';
 import { useAuthStore } from '@stores/authStore';
@@ -137,7 +138,7 @@ export function HomeScreen({ navigation }: { navigation: { navigate: Navigate } 
                 <Card>
                   <CardTitle title="Needs attention" hint={String(attention.length)} />
                   {attention.slice(0, 5).map((entry) => (
-                    <Pressable
+                    <Tap
                       key={`${entry.site.id}-${entry.reason}`}
                       onPress={() => openSite(entry.site)}
                       style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
@@ -148,7 +149,7 @@ export function HomeScreen({ navigation }: { navigation: { navigate: Navigate } 
                         <Text style={{ color: scheme.textMuted, fontSize: 13 }}>{entry.reason}</Text>
                       </View>
                       <ChevronRight color={scheme.textMuted} size={18} />
-                    </Pressable>
+                    </Tap>
                   ))}
                 </Card>
               ) : null}
@@ -217,7 +218,7 @@ function SiteRow({ site, onPress }: { site: SiteMonitor; onPress: () => void }) 
   const quiet = site.daysQuiet === null || site.daysQuiet >= 3;
 
   return (
-    <Pressable onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+    <Tap onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
       <View style={{ flex: 1, gap: 2 }}>
         <Text style={{ color: scheme.text, fontSize: 15, fontWeight: '600' }}>{site.name}</Text>
         <Text style={{ color: scheme.textMuted, fontSize: 13 }}>
@@ -237,7 +238,7 @@ function SiteRow({ site, onPress }: { site: SiteMonitor; onPress: () => void }) 
       </View>
 
       <ChevronRight color={scheme.textMuted} size={18} />
-    </Pressable>
+    </Tap>
   );
 }
 
@@ -308,7 +309,7 @@ function CardTitle({ title, hint, onPress }: { title: string; hint?: string; onP
     </View>
   );
 
-  return onPress ? <Pressable onPress={onPress}>{content}</Pressable> : content;
+  return onPress ? <Tap onPress={onPress}>{content}</Tap> : content;
 }
 
 function Metric({ label, value, tone }: { label: string; value: string; tone?: string }) {

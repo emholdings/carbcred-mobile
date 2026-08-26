@@ -1,8 +1,9 @@
-import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronRight } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { Tap } from '@shared/components/Tap';
 import { QueryState } from '@shared/components/QueryState';
 import type { MoreStackParamList } from '@navigation/types';
 import { useAuthStore } from '@stores/authStore';
@@ -72,7 +73,7 @@ export function ComplianceScreen({ navigation }: Props) {
           {(value) => (
             <>
               {value.items.map((item) => (
-                <Pressable
+                <Tap
                   key={`${item.kind}-${item.id}`}
                   onPress={() =>
                     navigation
@@ -117,7 +118,7 @@ export function ComplianceScreen({ navigation }: Props) {
                   </View>
 
                   <ChevronRight color={scheme.textMuted} size={18} />
-                </Pressable>
+                </Tap>
               ))}
             </>
           )}

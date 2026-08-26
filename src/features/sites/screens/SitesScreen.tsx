@@ -1,8 +1,9 @@
-import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronRight } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { Tap } from '@shared/components/Tap';
 import { QueryState } from '@shared/components/QueryState';
 import type { RiversStackParamList } from '@navigation/types';
 import { useAuthStore } from '@stores/authStore';
@@ -71,7 +72,7 @@ function SiteCard({ site, onPress }: { site: SiteRow; onPress: () => void }) {
   const { scheme } = useTheme();
 
   return (
-    <Pressable
+    <Tap
       onPress={onPress}
       style={{
         backgroundColor: scheme.surface,
@@ -94,7 +95,7 @@ function SiteCard({ site, onPress }: { site: SiteRow; onPress: () => void }) {
         </Text>
       </View>
       <ChevronRight color={scheme.textMuted} size={20} />
-    </Pressable>
+    </Tap>
   );
 }
 

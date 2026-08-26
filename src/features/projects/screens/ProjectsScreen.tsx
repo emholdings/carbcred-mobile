@@ -1,8 +1,9 @@
-import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronRight } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { Tap } from '@shared/components/Tap';
 import { QueryState } from '@shared/components/QueryState';
 import type { MoreStackParamList } from '@navigation/types';
 import { useAuthStore } from '@stores/authStore';
@@ -38,7 +39,7 @@ export function ProjectsScreen({ navigation }: Props) {
           {(list) => (
             <>
               {list.map((project: ProjectSummary) => (
-                <Pressable
+                <Tap
                   key={project.id}
                   onPress={() => navigation.navigate('ProjectDetail', { slug: project.slug, name: project.name })}
                   style={{
@@ -59,7 +60,7 @@ export function ProjectsScreen({ navigation }: Props) {
                     </Text>
                   </View>
                   <ChevronRight color={scheme.textMuted} size={20} />
-                </Pressable>
+                </Tap>
               ))}
             </>
           )}

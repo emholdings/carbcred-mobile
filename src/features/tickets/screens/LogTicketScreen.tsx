@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, ScrollView, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as Location from 'expo-location';
 import { MapPin } from 'lucide-react-native';
 import { Button } from '@shared/components/Button';
+import { Tap } from '@shared/components/Tap';
 import { BrandScreen } from '@shared/components/BrandScreen';
 import { TextField } from '@shared/components/TextField';
 import { clientRef } from '@features/capture/clientRef';
@@ -106,7 +107,7 @@ export function LogTicketScreen({ navigation }: Props) {
           <Field label={`Priority — ${chosen.default_priority} unless you change it`}>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {vocabulary.data?.priorities.map((option) => (
-                <Pressable
+                <Tap
                   key={option}
                   onPress={() => setPriority(priority === option ? null : option)}
                   style={{
@@ -127,7 +128,7 @@ export function LogTicketScreen({ navigation }: Props) {
                   >
                     {option}
                   </Text>
-                </Pressable>
+                </Tap>
               ))}
             </View>
           </Field>
@@ -149,7 +150,7 @@ export function LogTicketScreen({ navigation }: Props) {
           </Field>
         ) : null}
 
-        <Pressable
+        <Tap
           onPress={takeLocation}
           style={{
             flexDirection: 'row',
@@ -168,7 +169,7 @@ export function LogTicketScreen({ navigation }: Props) {
               ? `${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)}`
               : 'Tap to record where you are'}
           </Text>
-        </Pressable>
+        </Tap>
 
         <Button label="Log it" onPress={file} disabled={!category || title.trim().length === 0} />
       </ScrollView>
@@ -201,7 +202,7 @@ function Choice({
   const { scheme } = useTheme();
 
   return (
-    <Pressable
+    <Tap
       onPress={onPress}
       style={{
         backgroundColor: selected ? brand.deepLeaf : scheme.surface,
@@ -214,6 +215,6 @@ function Choice({
     >
       <Text style={{ color: selected ? brand.cream : scheme.text, fontSize: 15, fontWeight: '600' }}>{label}</Text>
       <Text style={{ color: selected ? 'rgba(250,247,241,0.75)' : scheme.textMuted, fontSize: 12 }}>{hint}</Text>
-    </Pressable>
+    </Tap>
   );
 }

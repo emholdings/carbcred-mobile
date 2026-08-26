@@ -1,8 +1,9 @@
-import { Alert, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { Alert, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Smartphone } from 'lucide-react-native';
 import { errorMessage } from '@api/client';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { Tap } from '@shared/components/Tap';
 import { QueryState } from '@shared/components/QueryState';
 import { useTheme } from '@theme/useTheme';
 import { fetchDevices, revokeDevice, revokeOtherDevices, type Device } from '../devices';
@@ -88,19 +89,19 @@ export function DevicesScreen() {
                   </View>
 
                   {device.current ? null : (
-                    <Pressable onPress={() => confirm(device)} hitSlop={8} disabled={cutOff.isPending}>
+                    <Tap onPress={() => confirm(device)} hitSlop={8} disabled={cutOff.isPending}>
                       <Text style={{ color: scheme.danger, fontSize: 14, fontWeight: '600' }}>Cut off</Text>
-                    </Pressable>
+                    </Tap>
                   )}
                 </View>
               ))}
 
               {list.length > 1 ? (
-                <Pressable onPress={confirmOthers} style={{ alignItems: 'center', paddingVertical: 10 }}>
+                <Tap onPress={confirmOthers} style={{ alignItems: 'center', paddingVertical: 10 }}>
                   <Text style={{ color: scheme.danger, fontSize: 15, fontWeight: '700' }}>
                     Cut off every other handset
                   </Text>
-                </Pressable>
+                </Tap>
               ) : null}
 
               <Text style={{ color: scheme.textMuted, fontSize: 13, lineHeight: 19 }}>

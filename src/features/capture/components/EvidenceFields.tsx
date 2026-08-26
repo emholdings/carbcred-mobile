@@ -1,8 +1,9 @@
-import { Image, Pressable, Text, View } from 'react-native';
+import { Image, Text, View } from 'react-native';
 import { Camera, MapPin, X } from 'lucide-react-native';
 import { useTheme } from '@theme/useTheme';
 import type { Coordinates } from '../useCoordinates';
 import type { QueuedFile } from '../types';
+import { Tap } from '@shared/components/Tap';
 
 /**
  * What stands behind a number: where it was taken, and a photograph of the
@@ -35,7 +36,7 @@ export function EvidenceFields({
     <View style={{ gap: 10 }}>
       <Text style={{ color: scheme.textMuted, fontSize: 13, fontWeight: '600' }}>Evidence</Text>
 
-      <Pressable
+      <Tap
         onPress={onLocate}
         style={{
           flexDirection: 'row',
@@ -56,13 +57,13 @@ export function EvidenceFields({
               ? `${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)}`
               : 'Add where you are standing'}
         </Text>
-      </Pressable>
+      </Tap>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {photos.map((photo) => (
           <View key={photo.uri} style={{ position: 'relative' }}>
             <Image source={{ uri: photo.uri }} style={{ width: 72, height: 72, borderRadius: 10 }} />
-            <Pressable
+            <Tap
               onPress={() => onRemovePhoto(photo.uri)}
               hitSlop={8}
               accessibilityRole="button"
@@ -80,11 +81,11 @@ export function EvidenceFields({
               }}
             >
               <X color="#ffffff" size={13} strokeWidth={3} />
-            </Pressable>
+            </Tap>
           </View>
         ))}
 
-        <Pressable
+        <Tap
           onPress={onAddPhoto}
           style={{
             width: 72,
@@ -100,7 +101,7 @@ export function EvidenceFields({
         >
           <Camera color={scheme.textMuted} size={20} />
           <Text style={{ color: scheme.textMuted, fontSize: 11 }}>Counter</Text>
-        </Pressable>
+        </Tap>
       </View>
     </View>
   );

@@ -1,7 +1,8 @@
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { brand } from '@theme/colors';
 import { useTheme } from '@theme/useTheme';
+import { Tap } from '@shared/components/Tap';
 
 /** Today, as the server writes dates. */
 export function today(): string {
@@ -83,9 +84,9 @@ export function DateField({
       </View>
 
       {isToday ? null : (
-        <Pressable onPress={() => onChange(now)} hitSlop={8} style={{ alignSelf: 'flex-start' }}>
+        <Tap onPress={() => onChange(now)} hitSlop={8} style={{ alignSelf: 'flex-start' }}>
           <Text style={{ color: brand.deepLeaf, fontSize: 13, fontWeight: '600' }}>Back to today</Text>
-        </Pressable>
+        </Tap>
       )}
     </View>
   );
@@ -103,7 +104,7 @@ function Step({
   disabled?: boolean;
 }) {
   return (
-    <Pressable
+    <Tap
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="button"
@@ -112,6 +113,6 @@ function Step({
       style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}
     >
       {icon}
-    </Pressable>
+    </Tap>
   );
 }

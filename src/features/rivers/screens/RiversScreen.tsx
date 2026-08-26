@@ -1,8 +1,9 @@
-import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronRight, Map } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { Tap } from '@shared/components/Tap';
 import { QueryState } from '@shared/components/QueryState';
 import type { RiversStackParamList } from '@navigation/types';
 import { useAuthStore } from '@stores/authStore';
@@ -57,7 +58,7 @@ export function RiversScreen({ navigation }: Props) {
           </View>
         ) : null}
 
-        <Pressable
+        <Tap
           onPress={() => navigation.navigate('RiverMap')}
           style={{
             flexDirection: 'row',
@@ -75,7 +76,7 @@ export function RiversScreen({ navigation }: Props) {
               Every reach, every site, and who is allocated where
             </Text>
           </View>
-        </Pressable>
+        </Tap>
 
         <QueryState
           query={rivers}
@@ -100,7 +101,7 @@ export function RiversScreen({ navigation }: Props) {
         {/* A site not yet on an approved river would otherwise be invisible
             from here — the web view groups them as "Not yet on an approved
             river"; this is the same promise, reached from one entry. */}
-        <Pressable
+        <Tap
           onPress={() => navigation.navigate('RiverSites', {})}
           style={{
             backgroundColor: scheme.surface,
@@ -120,7 +121,7 @@ export function RiversScreen({ navigation }: Props) {
             </Text>
           </View>
           <ChevronRight color={scheme.textMuted} size={20} />
-        </Pressable>
+        </Tap>
       </ScrollView>
     </BrandScreen>
   );
@@ -131,7 +132,7 @@ function RiverCard({ river, onPress }: { river: River; onPress: () => void }) {
   const { scheme } = useTheme();
 
   return (
-    <Pressable
+    <Tap
       onPress={onPress}
       style={{
         backgroundColor: scheme.surface,
@@ -154,7 +155,7 @@ function RiverCard({ river, onPress }: { river: River; onPress: () => void }) {
         </Text>
       </View>
       <ChevronRight color={scheme.textMuted} size={20} />
-    </Pressable>
+    </Tap>
   );
 }
 

@@ -1,8 +1,9 @@
-import { ScrollView, Text, View, Pressable } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { Check, Home } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { Tap } from '@shared/components/Tap';
 import type { MoreStackParamList } from '@navigation/types';
 import { useAuthStore } from '@stores/authStore';
 import { brand } from '@theme/colors';
@@ -53,7 +54,7 @@ export function OrganisationScreen({ navigation }: Props) {
           const selected = organisation.slug === current;
 
           return (
-            <Pressable
+            <Tap
               key={organisation.id}
               onPress={() => choose(organisation.slug)}
               accessibilityRole="radio"
@@ -83,7 +84,7 @@ export function OrganisationScreen({ navigation }: Props) {
                 <Home color={scheme.textMuted} size={16} />
               ) : null}
               {selected ? <Check color={brand.deepLeaf} size={20} strokeWidth={3} /> : null}
-            </Pressable>
+            </Tap>
           );
         })}
 

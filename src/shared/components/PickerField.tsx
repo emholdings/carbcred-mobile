@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { FlatList, Modal, Pressable, Text, View } from 'react-native';
+import { FlatList, Modal, Text, View } from 'react-native';
 import { Check, ChevronDown, X } from 'lucide-react-native';
 import { brand } from '@theme/colors';
 import { useTheme } from '@theme/useTheme';
+import { Tap } from '@shared/components/Tap';
 
 /**
  * One of a long fixed list, chosen from a sheet.
@@ -33,7 +34,7 @@ export function PickerField({
     <View style={{ gap: 6 }}>
       <Text style={{ color: scheme.textMuted, fontSize: 13, fontWeight: '600' }}>{label}</Text>
 
-      <Pressable
+      <Tap
         onPress={() => setOpen(true)}
         accessibilityRole="button"
         style={{
@@ -52,7 +53,7 @@ export function PickerField({
           {value || placeholder}
         </Text>
         <ChevronDown color={scheme.textMuted} size={18} />
-      </Pressable>
+      </Tap>
 
       <Modal visible={open} animationType="slide" transparent onRequestClose={() => setOpen(false)}>
         <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(14, 43, 30, 0.45)' }}>
@@ -68,9 +69,9 @@ export function PickerField({
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, paddingBottom: 10 }}>
               <Text style={{ color: scheme.text, fontSize: 17, fontWeight: '700', flex: 1 }}>{label}</Text>
-              <Pressable onPress={() => setOpen(false)} hitSlop={10} accessibilityLabel="Close">
+              <Tap onPress={() => setOpen(false)} hitSlop={10} accessibilityLabel="Close">
                 <X color={scheme.textMuted} size={22} />
-              </Pressable>
+              </Tap>
             </View>
 
             <FlatList
@@ -80,7 +81,7 @@ export function PickerField({
                 const chosen = item === value;
 
                 return (
-                  <Pressable
+                  <Tap
                     onPress={() => {
                       onChange(item);
                       setOpen(false);
@@ -106,7 +107,7 @@ export function PickerField({
                       {item}
                     </Text>
                     {chosen ? <Check color={brand.deepLeaf} size={18} strokeWidth={3} /> : null}
-                  </Pressable>
+                  </Tap>
                 );
               }}
             />

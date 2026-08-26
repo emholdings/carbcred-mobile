@@ -1,4 +1,4 @@
-import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   CircleDollarSign,
@@ -9,6 +9,7 @@ import {
   Ticket as TicketIcon,
 } from 'lucide-react-native';
 import { BrandScreen } from '@shared/components/BrandScreen';
+import { Tap } from '@shared/components/Tap';
 import { QueryState } from '@shared/components/QueryState';
 import { brand } from '@theme/colors';
 import { useTheme } from '@theme/useTheme';
@@ -70,18 +71,18 @@ export function NotificationsScreen({ navigation }: { navigation: { navigate: Na
           {(value) => (
             <>
               {value.unread > 0 ? (
-                <Pressable
+                <Tap
                   onPress={() => readAll.mutate()}
                   style={{ alignSelf: 'flex-end' }}
                   hitSlop={8}
                   disabled={readAll.isPending}
                 >
                   <Text style={{ color: brand.deepLeaf, fontSize: 14, fontWeight: '700' }}>Mark all read</Text>
-                </Pressable>
+                </Tap>
               ) : null}
 
               {value.items.map((notice) => (
-                <Pressable
+                <Tap
                   key={notice.id}
                   onPress={() => open(notice)}
                   style={{
@@ -113,7 +114,7 @@ export function NotificationsScreen({ navigation }: { navigation: { navigate: Na
                     ) : null}
                     <Text style={{ color: scheme.textMuted, fontSize: 12 }}>{when(notice.created_at)}</Text>
                   </View>
-                </Pressable>
+                </Tap>
               ))}
             </>
           )}
